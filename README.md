@@ -4,7 +4,7 @@ OpenMediaVault Installation (Including unsupported and not recommended)
 
 Procedures to do an OpenMediaVault installation including prodedures both unsupported (on a RAID protected filesystem and sharing os space with data) and not recommended (using and USB flash drive).
 
-![](/images/openmediavault_logo.svg)
+![](/images/omv_logo.png)
 OpenMediaVault is available at  https://www.openmediavault.org/ and installation procedure at https://openmediavault.readthedocs.io/en/5.x/installation/index.html. I will be using version 5.x and only specifying here the steps which are not reflected in the documentation.
 
 
