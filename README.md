@@ -9,13 +9,42 @@ OpenMediaVault is available at  https://www.openmediavault.org/ and installation
 
 I will be using version 5.x and only specifying here the steps which are not reflected in the documentation.
 
+* [Hardware used](#hardware)
 * [Some initial recommendations and issues](#recommendations)
 * [Installation using and USB flash drive](#usb-drive)
 * [Installation using only hard drives](#hard-drive)
 * [References & Credits](#references-credits)
 * [Summary](#summary)
 
+### Hardware used
+In case it's of any interest this is the hardware I will be using for the installation:
+
+- Motherboard: ASRock H370M-ITX/ac Mini ITX LGA1151 Motherboard
+> Mini ITX format and with 6 SATA 6Gb connectors on the board.
+
+- CPU: Intel Pentium Gold G5400 3.7 GHz Dual-Core Processor
+> There is an update of this model in 2019 to Intel Pentium Gold G5420
+
+- Memory: Corsair Vengeance LPX 8 GB (1 x 8 GB) DDR4-2400 Memory
+> One single DIMM as I might upgrade with a second one if I start using the system to spin contaners or implement ZFS.
+I would have preferred Crucial Ballistix but it was not available when ordering at a reasonable price.
+Make sure to verify that it's supported in the motherborard documentation. Also check latencies.
+
+- Fan: Noctua NH-L9i
+> Very quiet and low profile.
+I make it low profile, as when I upgrade the NAS hardware, I can easily reuse and turn this into a very small mediacenter.
+
+- Case: Fractal Design Array R2 Mini ITX NAS Case with 300 Watt SFX Power Supply Unit
+> No longer available. Now replaced for the Fractal Design Node 304 Mini ITX Tower Case.
+
+
 ### Some initial recommendations and issues
+
+- During installation I was given the choice of using one of the two 1Gb Intel ethernet port, I219V or I211AT. As initially I was going to use one only, I selected the I219-V the other one goes over PCIE (that's what I read at least).
+- After automaticaly assigning IP using DNS, I pressed "ESC" and I was given the option to manually configure the network. This is ideal, as I need to set a fixed IP, and I can do that from the begining.
+> I also used this step to specify 3 name servers separating the IPs by spaces: Open DNS (208.67.220.220), Google (8.8.8.8) and a third one for my local Internet provider.
+
+  
 
 ## Installation using and USB flash drive
 
@@ -183,12 +212,10 @@ update-initramfs -u
 
 # Finish!
 
-> be careful to not use “sfdisk” command to recover partition table from the healthy disk, sfdisk does not support GPT.
+> Be careful to not use “sfdisk” command to recover partition table from the healthy disk, sfdisk does not support GPT.
 Use “sgdisk” instead.
 If new disk is /dev/sdb and healthy disk is /dev/sda, then do
-
 > ```shell sgdisk -R=/dev/sdb /dev/sda ```
-
 > to replicate partition table from sda to sdb.
 Finally, use OMV GUI to recover RAID mirror.
 
