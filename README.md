@@ -53,7 +53,9 @@ I make it low profile, as when I upgrade the NAS hardware, I can easily reuse an
   > In my case, the chassis fan was not working. I had to change the control mode from "Auto" to "PWM Mode".
 
   - Disable the hardware that will not be used.
-  >
+  > I disabled the audio and the WiFi
+
+  - Make sure S.M.A.R.T. is enabled for the hard drives.
 
 
 - During installation I was given the choice of using one of the two 1Gb Intel ethernet port, I219V or I211AT. As initially I was going to use one only, I selected the I219-V the other one goes over PCIE (that's what I read at least).
@@ -70,6 +72,11 @@ I make it low profile, as when I upgrade the NAS hardware, I can easily reuse an
 - You might get installation giving an error after some percentage during the "Installing the system..." phase. In my case it was due to an USB drive without enough sustained write speed. I had to update to a faster one. You can check USB drives speed tests here: https://usb.userbenchmark.com/. Also, make sure you are connecting it to an USB 3.x connector on the motherboard.
 
 - After the first reboot IPs are not properly configured. Please reboot again, this second time, the IP shoild have been set to the fixed IP specified during installation.
+
+From here, you can login with root/<root_password> and type the command
+```shell omv-firstaid
+```
+You get into a menu where you can configure the network interface or change the GUI "admin" user password among other things.  
 
 ## Installation using and USB flash drive
 
