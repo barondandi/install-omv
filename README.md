@@ -37,6 +37,11 @@ I make it low profile, as when I upgrade the NAS hardware, I can easily reuse an
 - Case: Fractal Design Array R2 Mini ITX NAS Case with 300 Watt SFX Power Supply Unit
 > No longer available. Now replaced for the Fractal Design Node 304 Mini ITX Tower Case.
 
+- USB Drive: Samsung Fit Plus 32Gb USB 3.1
+> Avg. Sustained Write Speed 21.8MB/s. Avg. Sequential Write Speed 26.7MB/s (https://usb.userbenchmark.com/SpeedTest/38059/Samsung-Flash-Drive-FIT)
+
+- Hard drives #1: 2 x	SEAGATE 1.5 TB 3.5" 5400RPM
+- Hard drives #2: 4 x	Western Digital Red 8 TB 3.5" 5400RPM
 
 ### Some initial recommendations and issues
 
@@ -49,8 +54,8 @@ I make it low profile, as when I upgrade the NAS hardware, I can easily reuse an
 > NOTE: If you run into any trouble during installation, you can press "ESC" key and go back to a previous step.  
 
 - If you get a "No root file system" error when partitioning the disks, there are several things you can do:
-- - Enter the BIOS menu, and check the USB configuration. In my case I had to change the "Legacy USB Support" to "UEFI Setup Only" for the installation to work.
-- - Format the USB Flash drive in EXT4 and make sure you con mount it and write into it. I had to first format it to FAT32 in a Windows system, and then move to a Linux system and overwrite the partition with EXT4 (no idea of the reason, but for me it was the only way to make it work).
+  - Enter the BIOS menu, and check the USB configuration. In my case I had to change the "Legacy USB Support" to "UEFI Setup Only" for the installation to work.
+  - Format the USB Flash drive in EXT4 and make sure you con mount it and write into it. I had to first format it to FAT32 in a Windows system, and then move to a Linux system and overwrite the partition with EXT4 (no idea of the reason, but for me it was the only way to make it work).
 - You might get installation giving an error after some percentage during the "Installing the system..." phase. In my case it was due to an USB drive without enough sustained write speed. I had to update to a faster one. You can check USB drives speed tests here: https://usb.userbenchmark.com/. Also, make sure you are connecting it to an USB 3.x connector on the motherboard.
 
 
