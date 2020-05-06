@@ -45,6 +45,17 @@ I make it low profile, as when I upgrade the NAS hardware, I can easily reuse an
 
 ### Some initial recommendations and issues
 
+- In motherboards with several Monitor ports, usually only one is enabled initially. Find it and connect the monitor to follow with installation. Later on this can be changed in the BIOS.
+> In my case it was one of the 2 HDMI provided.
+
+- Get inside the BIOS menu ans make sure that:
+  - All the fans are working properly. Proper ventilation of the drives is a must ans the main reasons for drives failures are temperature and vibration.
+  > In my case, the chassis fan was not working. I had to change the control mode from "Auto" to "PWM Mode".
+
+  - Disable the hardware that will not be used.
+  >
+
+
 - During installation I was given the choice of using one of the two 1Gb Intel ethernet port, I219V or I211AT. As initially I was going to use one only, I selected the I219-V the other one goes over PCIE (that's what I read at least).
 - After automaticaly assigning IP using DNS, I pressed "ESC" and I was given the option to manually configure the network. This is ideal, as I need to set a fixed IP, and I can do that from the begining.
 > I also used this step to specify 3 name servers separating the IPs by spaces: Open DNS (208.67.220.220), Google (8.8.8.8) and a third one for my local Internet provider.
@@ -58,6 +69,7 @@ I make it low profile, as when I upgrade the NAS hardware, I can easily reuse an
   - Format the USB Flash drive in EXT4 and make sure you con mount it and write into it. I had to first format it to FAT32 in a Windows system, and then move to a Linux system and overwrite the partition with EXT4 (no idea of the reason, but for me it was the only way to make it work).
 - You might get installation giving an error after some percentage during the "Installing the system..." phase. In my case it was due to an USB drive without enough sustained write speed. I had to update to a faster one. You can check USB drives speed tests here: https://usb.userbenchmark.com/. Also, make sure you are connecting it to an USB 3.x connector on the motherboard.
 
+- After the first reboot IPs are not properly configured. Please reboot again, this second time, the IP shoild have been set to the fixed IP specified during installation.
 
 ## Installation using and USB flash drive
 
