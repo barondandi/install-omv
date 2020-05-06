@@ -85,7 +85,20 @@ Now we plug the USB drive onto a linux system and use GParted over it to reduce 
 
 ![](/images/gparted_1.png)
 
-- We right click and Unmount the /dev/sdx2 partition
+- We right click and Unmount the /dev/sdx2 partition.
+- We can now resize it to the desired amount (I used 8192GiB)
+
+![](/images/gparted_2.png)
+
+- And apply the changes before leaving GParted
+
+![](/images/gparted_4.png)
+![](/images/gparted_5.png)
+
+- We eject the USB drive and plug it back on the NAS. We boot again and see what happens. If there are no issues, we log on to the GUI and check that the filesystems are fine:
+
+![](/images/gparted_6.png)
+
 
 
 ## Installation using and USB flash drive
@@ -93,10 +106,6 @@ Now we plug the USB drive onto a linux system and use GParted over it to reduce 
 OpenMediaVault is great NAS OS and I prefer it over FreeNAS or other BSD based NAS solutions. I guess that OMV being based on Debian is a major plus with me. But, there is a nasty side of OMV – they do not support using OS drive for data storage (as noted in OMV installation guide) and if you install OMV on a 1TB drive you can say goodbye to the nice 950GB of free space on that device. Recommended solution for this is installing OMV on smaller drive or on USB device. I had no luck using USB devices, every device would die after few weeks or months, and using seperate smaller SATA drive is also a nogo because I have no extra/free SATA ports in my NAS.
 
 Wouldn’t it be nice if we could use 2 drives in RAID1 and install OMV on one partition and use rest of the free space for data? We can make this happen with a little magic. Let’s begin.
-
-I will be using Virtualbox for this, but same principles apply on hardware machines.
-
-VirtualBox OMV drives
 
 First install OMV on a USB drive, and boot for the first time. Shut down OMV and insert two drives you actually intend on using, and boot OMV from USB device. Once OMV is up and running, login as root and start SSH service with following command:
 
