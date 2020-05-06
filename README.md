@@ -9,15 +9,31 @@ OpenMediaVault is available at  https://www.openmediavault.org/ and installation
 
 I will be using version 5.x and only specifying here the steps which are not reflected in the documentation.
 
-* [Hardware used](#hardware)
-* [Some initial recommendations and issues](#recommendations)
-* [Installation using and USB flash drive](#usb-drive)
-* [Installation using only hard drives](#hard-drive)
-* [References & Credits](#references-credits)
+* [Hardware used](#hardware-used)
+* [Some initial recommendations and issues](#some-initial-recommendations-and-issues)
+  * [USB is not recommended, so why?](#USB-is-not-recommended,-so-why?)
+  * [Generic recommendations](#Generic-recommendations)
+  * [USB specific recommendations](#USB-specific-recommendations)
+* [USB Flash Drive installation](#USB-Flash-Drive-installation)
+  * [Post installation tasks](#Post-installation-tasks)
+  * [Backing up configuration](#Backing-up-configuration)
+* [RAID installation using an USB flash drive](#RAID-installation-using-an-USB-flash-drive)
+* [RAID installation using only hard drives](#RAID-installation-using-only-hard-drives)
+* [References and Credits](#references-and-credits)
 * [Summary](#summary)
 
 
-### Hardware used
+I already went through several NAS builds over the years. From a tailored made FreeBSD kernel to spin FreeNAS, openfiler, Ubuntu Server or a QNAP system.
+
+In the end I turned to OpenMediaVault, as it saves me a lot of pain for the everyday administration (and I am becoming lazy), and still gives you the full power of a Debian under the hood, that allows you any sort of tailoring, or the option to tinker if anything goes really wrong. This last past is a must for me, as I already had the experience of _**losing all the data**_ in two of my previous NASes (ZFS corruption due to lack of memory and an underpowered Annpurna Labs CPU based QNAP).
+
+You might want to go through this tutorial for some of the following reasons:
+* You have no extra/free SATA ports in your NAS and want to make sure you do a proper installation on a USB drive, wihtout it dying after few weeks or months.
+* You install on a drive with plenty of space. As OMV does not support using OS drive for data storage (as noted in OMV installation guide) you waste a lot of free space on that device.
+* You want to RAID protect your OS to make sure you keep operation even if one of your boot drives fail.
+
+
+## Hardware used
 In case it's of any interest this is the hardware I will be using for the installation:
 
 - **Motherboard:** ASRock H370M-ITX/ac Mini ITX LGA1151 Motherboard
@@ -46,7 +62,14 @@ In case it's of any interest this is the hardware I will be using for the instal
 - **Hard drives #1:** 2 x	SEAGATE 1.5 TB 3.5" 5400RPM
 - **Hard drives #2:** 4 x	Western Digital Red 8 TB 3.5" 5400RPM
 
-### Some initial recommendations and issues
+## Some initial recommendations and issues
+
+### USB is not recommended, so why?
+
+### Generic recommendations
+
+### USB specific recommendations
+
 
 - In motherboards with several Monitor ports, usually only one is enabled initially. Find it and connect the monitor to follow with installation. Later on this can be changed in the BIOS.
 > In my case it was one of the 2 HDMI provided.
@@ -113,11 +136,8 @@ Now we plug the USB drive onto a linux system and use GParted over it to reduce 
 ![Power button](/images/power-button.png)
 
 
-## Installation using and USB flash drive
+## Installation using an USB flash drive
 
-OpenMediaVault is great NAS OS and I prefer it over FreeNAS or other BSD based NAS solutions. I guess that OMV being based on Debian is a major plus with me. But, there is a nasty side of OMV – they do not support using OS drive for data storage (as noted in OMV installation guide) and if you install OMV on a 1TB drive you can say goodbye to the nice 950GB of free space on that device. Recommended solution for this is installing OMV on smaller drive or on USB device. I had no luck using USB devices, every device would die after few weeks or months, and using seperate smaller SATA drive is also a nogo because I have no extra/free SATA ports in my NAS.
-
-Wouldn’t it be nice if we could use 2 drives in RAID1 and install OMV on one partition and use rest of the free space for data? We can make this happen with a little magic. Let’s begin.
 
 First install OMV on a USB drive, and boot for the first time. Shut down OMV and insert two drives you actually intend on using, and boot OMV from USB device. Once OMV is up and running, login as root and start SSH service with following command:
 
