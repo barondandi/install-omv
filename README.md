@@ -44,7 +44,15 @@ I make it low profile, as when I upgrade the NAS hardware, I can easily reuse an
 - After automaticaly assigning IP using DNS, I pressed "ESC" and I was given the option to manually configure the network. This is ideal, as I need to set a fixed IP, and I can do that from the begining.
 > I also used this step to specify 3 name servers separating the IPs by spaces: Open DNS (208.67.220.220), Google (8.8.8.8) and a third one for my local Internet provider.
 
-  
+- You get a warning about UEFI mode installation. Force it with no problem.
+
+> NOTE: If you run into any trouble during installation, you can press "ESC" key and go back to a previous step.  
+
+- If you get a "No root file system" error when partitioning the disks, there are several things you can do:
+- - Enter the BIOS menu, and check the USB configuration. In my case I had to change the "Legacy USB Support" to "UEFI Setup Only" for the installation to work.
+- - Format the USB Flash drive in EXT4 and make sure you con mount it and write into it. I had to first format it to FAT32 in a Windows system, and then move to a Linux system and overwrite the partition with EXT4 (no idea of the reason, but for me it was the only way to make it work).
+- You might get installation giving an error after some percentage during the "Installing the system..." phase. In my case it was due to an USB drive without enough sustained write speed. I had to update to a faster one. You can check USB drives speed tests here: https://usb.userbenchmark.com/. Also, make sure you are connecting it to an USB 3.x connector on the motherboard.
+
 
 ## Installation using and USB flash drive
 
