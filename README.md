@@ -103,8 +103,12 @@ Now we plug the USB drive onto a linux system and use GParted over it to reduce 
 
 - First we go to System \ Update Management and we apply the available updates.
 - Then we go to System \ Date and Time and enable NTP service after specifiying the timezone.
-> NOTE: Don't forget to SAVE the changesand then APPLY de configuration in the menu that appears.
- 
+> NOTE: Don't forget to SAVE the changes and then APPLY de configuration in the menu that appears. Othenwise changes will be lost.
+
+- To make it easier to power down the system, go to System \ Power button, and change it to "Shutdown" so that we can power down the NAS without any monitor and keyboard.
+
+![](/images/power-button.png)
+
 
 ## Installation using and USB flash drive
 
