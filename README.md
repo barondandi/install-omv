@@ -40,6 +40,8 @@ In case it's of any interest this is the hardware I will be using for the instal
 
 - USB Drive: Samsung Fit Plus 32Gb USB 3.1
   > Avg. Sustained Write Speed 21.8MB/s. Avg. Sequential Write Speed 26.7MB/s (https://usb.userbenchmark.com/SpeedTest/38059/Samsung-Flash-Drive-FIT)
+  
+  > NOTE: _If possible, use a drive with LED activity, to make sure that after finishing installation and specific USB customization, activity is minimal over the drive, thus increasing the lifespan of the drive. During installation I used a bigger  Sandisk Extreme USB 3.0. I reduced the OS partition once finished and cloned it to the final drive._  
 
 - Hard drives #1: 2 x	SEAGATE 1.5 TB 3.5" 5400RPM
 - Hard drives #2: 4 x	Western Digital Red 8 TB 3.5" 5400RPM
@@ -86,21 +88,21 @@ shutdown -h now
 ```
 Now we plug the USB drive onto a linux system and use GParted over it to reduce the OS partition size. I will be leaving it at 8Gb, as it is more than enough and leave space to expand afterwards. This way the OS partition to backup will be smaller and take less time and space.
 
-![](/images/gparted_1.png)
+![GParted: Original Layout](/images/gparted_1.png)
 
 - We right click and Unmount the /dev/sdx2 partition.
 - We can now resize it to the desired amount (I used 8192GiB)
 
-![](/images/gparted_2.png)
+![GParted: Resize](/images/gparted_2.png)
 
 - And apply the changes before leaving GParted
 
 ![](/images/gparted_4.png)
-![](/images/gparted_5.png)
+![GParted: Apply changes](/images/gparted_5.png)
 
 - We eject the USB drive and plug it back on the NAS. We boot again and see what happens. If there are no issues, we log on to the GUI and check that the filesystems are fine:
 
-![](/images/gparted_6.png)
+![GParted: Final Layout](/images/gparted_6.png)
 
 - First we go to System \ Update Management and we apply the available updates.
 - Then we go to System \ Date and Time and enable NTP service after specifiying the timezone.
@@ -108,7 +110,7 @@ Now we plug the USB drive onto a linux system and use GParted over it to reduce 
 
 - To make it easier to power down the system, go to System \ Power button, and change it to "Shutdown" so that we can power down the NAS without any monitor and keyboard.
 
-![](/images/power-button.png)
+![Power button](/images/power-button.png)
 
 
 ## Installation using and USB flash drive
