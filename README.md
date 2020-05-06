@@ -5,22 +5,22 @@ OpenMediaVault Installation (Including unsupported and not recommended)
 
 ![](/images/omv_logo.png)
 
-OpenMediaVault is available at  https://www.openmediavault.org/ and installation procedure at https://openmediavault.readthedocs.io/en/5.x/installation/index.html.
+OpenMediaVault is available at  [https://www.openmediavault.org/](https://www.openmediavault.org/) and installation procedure at [https://openmediavault.readthedocs.io/en/5.x/installation/index.html](https://openmediavault.readthedocs.io/en/5.x/installation/index.html).
 
 I will be using version 5.x and only specifying here the steps which are not reflected in the documentation.
 
-* [Hardware used](#hardware-used)
-* [Some initial recommendations and issues](#some-initial-recommendations-and-issues)
-  * [USB is not recommended, so why?](#USB-is-not-recommended,-so-why?)
-  * [Generic recommendations](#Generic-recommendations)
-  * [USB specific recommendations](#USB-specific-recommendations)
-* [USB Flash Drive installation](#USB-Flash-Drive-installation)
-  * [Post installation tasks](#Post-installation-tasks)
-  * [Backing up configuration](#Backing-up-configuration)
-* [RAID installation using an USB flash drive](#RAID-installation-using-an-USB-flash-drive)
-* [RAID installation using only hard drives](#RAID-installation-using-only-hard-drives)
-* [References and Credits](#references-and-credits)
-* [Summary](#summary)
+1.  [Hardware used](#Hardware-used)
+2.  [Some initial recommendations and issues](#some-initial-recommendations-and-issues)
+    -   [USB is not recommended, so why?](#USB-is-not-recommended,-so-why?)
+    -   [Generic recommendations](#Generic-recommendations)
+    -   [USB specific recommendations](#USB-specific-recommendations)
+3.  [USB Flash Drive installation](#USB-Flash-Drive-installation)
+    -   [Post installation tasks](#Post-installation-tasks)
+    -   [Backing up configuration](#Backing-up-configuration)
+4.  [RAID installation using an USB flash drive](#RAID-installation-using-an-USB-flash-drive)
+5.  [RAID installation using only hard drives](#RAID-installation-using-only-hard-drives)
+6.  [References and Credits](#references-and-credits)
+7.  [Summary](#summary)
 
 
 I already went through several NAS builds over the years. From a tailored made FreeBSD kernel to spin FreeNAS, openfiler, Ubuntu Server or a QNAP system.
@@ -28,36 +28,36 @@ I already went through several NAS builds over the years. From a tailored made F
 In the end I turned to OpenMediaVault, as it saves me a lot of pain for the everyday administration (and I am becoming lazy), and still gives you the full power of a Debian under the hood, that allows you any sort of tailoring, or the option to tinker if anything goes really wrong. This last past is a must for me, as I already had the experience of _**losing all the data**_ in two of my previous NASes (ZFS corruption due to lack of memory and an underpowered Annpurna Labs CPU based QNAP).
 
 You might want to go through this tutorial for some of the following reasons:
-* You have no extra/free SATA ports in your NAS and want to make sure you do a proper installation on a USB drive, wihtout it dying after few weeks or months.
-* You install on a drive with plenty of space. As OMV does not support using OS drive for data storage (as noted in OMV installation guide) you waste a lot of free space on that device.
-* You want to RAID protect your OS to make sure you keep operation even if one of your boot drives fail.
+-   You have no extra/free SATA ports in your NAS and want to make sure you do a proper installation on a USB drive, wihtout it dying after few weeks or months.
+-   You install on a drive with plenty of space. As OMV does not support using OS drive for data storage (as noted in OMV installation guide) you waste a lot of free space on that device.
+-   You want to RAID protect your OS to make sure you keep operation even if one of your boot drives fail.
 
 
-## Hardware used
+## 1. Hardware used
 In case it's of any interest this is the hardware I will be using for the installation:
 
-- **Motherboard:** ASRock H370M-ITX/ac Mini ITX LGA1151 Motherboard
-  > Mini ITX format and with 6 SATA 6Gb connectors on the board.
+-   **Motherboard:** ASRock H370M-ITX/ac Mini ITX LGA1151 Motherboard
+    > Mini ITX format and with 6 SATA 6Gb connectors on the board.
 
-- **CPU:** Intel Pentium Gold G5400 3.7 GHz Dual-Core Processor
-  > There is an update of this model in 2019 to Intel Pentium Gold G5420
+-   **CPU:** Intel Pentium Gold G5400 3.7 GHz Dual-Core Processor
+    > There is an update of this model in 2019 to Intel Pentium Gold G5420
 
-- **Memory:** Corsair Vengeance LPX 8 GB (1 x 8 GB) DDR4-2400 Memory
-  > One single DIMM as I might upgrade with a second one if I start using the system to spin contaners or implement ZFS.
-  I would have preferred Crucial Ballistix but it was not available when ordering at a reasonable price.
-  Make sure to verify that it's supported in the motherborard documentation. Also check latencies.
+-   **Memory:** Corsair Vengeance LPX 8 GB (1 x 8 GB) DDR4-2400 Memory
+    > One single DIMM as I might upgrade with a second one if I start using the system to spin containers or implement ZFS.
+    > I would have preferred Crucial Ballistix but it was not available when ordering at a reasonable price.
+    > Make sure to verify that it's supported in the motherboard documentation. Also check latencies.
 
-- **Fan:** Noctua NH-L9i
-  > Very quiet and low profile.
-  I make it low profile, as when I upgrade the NAS hardware, I can easily reuse and turn this into a very small mediacenter.
+-   **Fan:** Noctua NH-L9i
+    > Very quiet and low profile.
+    > I make it low profile, as when I upgrade the NAS hardware, I can easily reuse and turn this into a very small mediacenter.
 
-- **Case:** Fractal Design Array R2 Mini ITX NAS Case with 300 Watt SFX Power Supply Unit
-  > No longer available. Now replaced for the Fractal Design Node 304 Mini ITX Tower Case.
+-   **Case:** Fractal Design Array R2 Mini ITX NAS Case with 300 Watt SFX Power Supply Unit
+    > No longer available. Now replaced for the Fractal Design Node 304 Mini ITX Tower Case.
 
-- **USB Drive:** Samsung Fit Plus 32Gb USB 3.1
-  > Avg. Sustained Write Speed 21.8MB/s. Avg. Sequential Write Speed 26.7MB/s (https://usb.userbenchmark.com/SpeedTest/38059/Samsung-Flash-Drive-FIT)
-  
-  > NOTE: _If possible, during installation, use a drive with LED activity, to make sure that after finishing installation and specific USB customization, activity is minimal over the drive. Thus, we increase the lifespan of the drive. During installation I used a bigger Sandisk Extreme USB 3.0. Once finished, I reduced the OS partition and cloned it to the final drive (procedure described later)._  
+-   **USB Drive:** Samsung Fit Plus 32Gb USB 3.1
+    > Avg. Sustained Write Speed 21.8MB/s. Avg. Sequential Write Speed 26.7MB/s (https://usb.userbenchmark.com/SpeedTest/38059/Samsung-Flash-Drive-FIT)
+
+    > NOTE: _If possible, during installation, use a drive with LED activity, to make sure that after finishing installation and specific USB customization, activity is minimal over the drive. Thus, we increase the lifespan of the drive. During installation I used a bigger Sandisk Extreme USB 3.0. Once finished, I reduced the OS partition and cloned it to the final drive (procedure described later)._  
 
 - **Hard drives #1:** 2 x	SEAGATE 1.5 TB 3.5" 5400RPM
 - **Hard drives #2:** 4 x	Western Digital Red 8 TB 3.5" 5400RPM
@@ -136,7 +136,13 @@ Now we plug the USB drive onto a linux system and use GParted over it to reduce 
 ![Power button](/images/power-button.png)
 
 
-## Installation using an USB flash drive
+## USB Flash Drive installation
+
+### Post installation tasks
+
+### Backing up configuration
+
+## RAID installation using an USB flash drive
 
 
 First install OMV on a USB drive, and boot for the first time. Shut down OMV and insert two drives you actually intend on using, and boot OMV from USB device. Once OMV is up and running, login as root and start SSH service with following command:
