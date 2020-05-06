@@ -20,31 +20,31 @@ I will be using version 5.x and only specifying here the steps which are not ref
 ### Hardware used
 In case it's of any interest this is the hardware I will be using for the installation:
 
-- Motherboard: ASRock H370M-ITX/ac Mini ITX LGA1151 Motherboard
+- **Motherboard:** ASRock H370M-ITX/ac Mini ITX LGA1151 Motherboard
   > Mini ITX format and with 6 SATA 6Gb connectors on the board.
 
-- CPU: Intel Pentium Gold G5400 3.7 GHz Dual-Core Processor
+- **CPU:** Intel Pentium Gold G5400 3.7 GHz Dual-Core Processor
   > There is an update of this model in 2019 to Intel Pentium Gold G5420
 
-- Memory: Corsair Vengeance LPX 8 GB (1 x 8 GB) DDR4-2400 Memory
+- **Memory:** Corsair Vengeance LPX 8 GB (1 x 8 GB) DDR4-2400 Memory
   > One single DIMM as I might upgrade with a second one if I start using the system to spin contaners or implement ZFS.
   I would have preferred Crucial Ballistix but it was not available when ordering at a reasonable price.
   Make sure to verify that it's supported in the motherborard documentation. Also check latencies.
 
-- Fan: Noctua NH-L9i
+- **Fan:** Noctua NH-L9i
   > Very quiet and low profile.
   I make it low profile, as when I upgrade the NAS hardware, I can easily reuse and turn this into a very small mediacenter.
 
-- Case: Fractal Design Array R2 Mini ITX NAS Case with 300 Watt SFX Power Supply Unit
+- **Case:** Fractal Design Array R2 Mini ITX NAS Case with 300 Watt SFX Power Supply Unit
   > No longer available. Now replaced for the Fractal Design Node 304 Mini ITX Tower Case.
 
-- USB Drive: Samsung Fit Plus 32Gb USB 3.1
+- **USB Drive:** Samsung Fit Plus 32Gb USB 3.1
   > Avg. Sustained Write Speed 21.8MB/s. Avg. Sequential Write Speed 26.7MB/s (https://usb.userbenchmark.com/SpeedTest/38059/Samsung-Flash-Drive-FIT)
   
   > NOTE: _If possible, during installation, use a drive with LED activity, to make sure that after finishing installation and specific USB customization, activity is minimal over the drive. Thus, we increase the lifespan of the drive. During installation I used a bigger Sandisk Extreme USB 3.0. Once finished, I reduced the OS partition and cloned it to the final drive (procedure described later)._  
 
-- Hard drives #1: 2 x	SEAGATE 1.5 TB 3.5" 5400RPM
-- Hard drives #2: 4 x	Western Digital Red 8 TB 3.5" 5400RPM
+- **Hard drives #1:** 2 x	SEAGATE 1.5 TB 3.5" 5400RPM
+- **Hard drives #2:** 4 x	Western Digital Red 8 TB 3.5" 5400RPM
 
 ### Some initial recommendations and issues
 
