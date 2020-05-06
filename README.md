@@ -76,7 +76,17 @@ I make it low profile, as when I upgrade the NAS hardware, I can easily reuse an
 From here, you can login with root/<root_password> and type the command
 ```shell omv-firstaid
 ```
-You get into a menu where you can configure the network interface or change the GUI "admin" user password among other things.  
+You get into a menu where you can configure the network interface or change the GUI "admin" user password among other things.
+
+Now you can shutdown the array to follow with the procedure:
+```shell shutdown -h now
+```
+Now we plug the USB drive onto a linux system and use GParted over it to reduce the OS partition size. I will be leaving it at 8Gb, as it is more than enough and leave space to expand afterwards. This way the OS partition to backup will be smaller and take less time and space.
+
+![](/images/gparted_1.png)
+
+- We right click and Unmount the /dev/sdx2 partition
+
 
 ## Installation using and USB flash drive
 
