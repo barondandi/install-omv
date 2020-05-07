@@ -9,18 +9,18 @@ OpenMediaVault is available at  [https://www.openmediavault.org/](https://www.op
 
 I will be using version 5.x and only specifying here the steps which are not reflected in the documentation.
 
-1.  [Hardware used](#Hardware-used)
-2.  [Some initial recommendations and issues](#some-initial-recommendations-and-issues)
+1.  [Hardware used](#1.-Hardware-used)
+2.  [Some initial recommendations and issues](#2.-some-initial-recommendations-and-issues)
     -   [USB is not recommended, so why?](#USB-is-not-recommended,-so-why?)
     -   [Generic recommendations](#Generic-recommendations)
     -   [USB specific recommendations](#USB-specific-recommendations)
-3.  [USB Flash Drive installation](#USB-Flash-Drive-installation)
+3.  [USB Flash Drive installation](#3.-USB-Flash-Drive-installation)
     -   [Post installation tasks](#Post-installation-tasks)
     -   [Backing up configuration](#Backing-up-configuration)
-4.  [RAID installation using an USB flash drive](#RAID-installation-using-an-USB-flash-drive)
-5.  [RAID installation using only hard drives](#RAID-installation-using-only-hard-drives)
-6.  [References and Credits](#references-and-credits)
-7.  [Summary](#summary)
+4.  [RAID installation using an USB flash drive](#4.-RAID-installation-using-an-USB-flash-drive)
+5.  [RAID installation using only hard drives](#5.-RAID-installation-using-only-hard-drives)
+6.  [References and Credits](#6.-references-and-credits)
+7.  [Summary](#7.-summary)
 
 
 I already went through several NAS builds over the years. From a tailored made FreeBSD kernel to spin FreeNAS, openfiler, Ubuntu Server or a QNAP system.
@@ -55,14 +55,14 @@ In case it's of any interest this is the hardware I will be using for the instal
     > No longer available. Now replaced for the Fractal Design Node 304 Mini ITX Tower Case.
 
 -   **USB Drive:** Samsung Fit Plus 32Gb USB 3.1
-    > Avg. Sustained Write Speed 21.8MB/s. Avg. Sequential Write Speed 26.7MB/s (https://usb.userbenchmark.com/SpeedTest/38059/Samsung-Flash-Drive-FIT)
+    > Avg. Sustained Write Speed 21.8MB/s. Avg. Sequential Write Speed 26.7MB/s ([https://usb.userbenchmark.com/SpeedTest/38059/Samsung-Flash-Drive-FIT](https://usb.userbenchmark.com/SpeedTest/38059/Samsung-Flash-Drive-FIT))
 
     > NOTE: _If possible, during installation, use a drive with LED activity, to make sure that after finishing installation and specific USB customization, activity is minimal over the drive. Thus, we increase the lifespan of the drive. During installation I used a bigger Sandisk Extreme USB 3.0. Once finished, I reduced the OS partition and cloned it to the final drive (procedure described later)._  
 
-- **Hard drives #1:** 2 x	SEAGATE 1.5 TB 3.5" 5400RPM
-- **Hard drives #2:** 4 x	Western Digital Red 8 TB 3.5" 5400RPM
+-   **Hard drives #1:** 2 x	SEAGATE 1.5 TB 3.5" 5400RPM
+-   **Hard drives #2:** 4 x	Western Digital Red 8 TB 3.5" 5400RPM
 
-## Some initial recommendations and issues
+## 2. Some initial recommendations and issues
 
 ### USB is not recommended, so why?
 
@@ -71,17 +71,14 @@ In case it's of any interest this is the hardware I will be using for the instal
 ### USB specific recommendations
 
 
-- In motherboards with several Monitor ports, usually only one is enabled initially. Find it and connect the monitor to follow with installation. Later on this can be changed in the BIOS.
-> In my case it was one of the 2 HDMI provided.
-
-- Get inside the BIOS menu ans make sure that:
-  - All the fans are working properly. Proper ventilation of the drives is a must ans the main reasons for drives failures are temperature and vibration.
-  > In my case, the chassis fan was not working. I had to change the control mode from "Auto" to "PWM Mode".
-
-  - Disable the hardware that will not be used.
-  > I disabled the audio and the WiFi
-
-  - Make sure S.M.A.R.T. is enabled for the hard drives.
+-   In motherboards with several Monitor ports, usually only one is enabled initially. Find it and connect the monitor to follow with installation. Later on this can be changed in the BIOS.
+    > In my case it was one of the 2 HDMI provided.
+-   Get inside the BIOS menu and make sure that:
+    -   All the fans are working properly. Proper ventilation of the drives is a must and the main reasons for drives failures are temperature and vibration.
+        > In my case, the chassis fan was not working. I had to change the control mode from "Auto" to "PWM Mode".
+    -   Disable the hardware that will not be used.
+        > I disabled the audio and the WiFi
+    -   Make sure S.M.A.R.T. is enabled for the hard drives.
 
 
 - During installation I was given the choice of using one of the two 1Gb Intel ethernet port, I219V or I211AT. As initially I was going to use one only, I selected the I219-V the other one goes over PCIE (that's what I read at least).
@@ -113,22 +110,22 @@ Now we plug the USB drive onto a linux system and use GParted over it to reduce 
 
 ![GParted: Original Layout](/images/gparted_1.png)
 
-- We right click and Unmount the /dev/sdx2 partition.
-- We can now resize it to the desired amount (I used 8192GiB)
+-   We right click and Unmount the /dev/sdx2 partition.
+-   We can now resize it to the desired amount (I used 8192GiB)
 
 ![GParted: Resize](/images/gparted_2.png)
 
-- And apply the changes before leaving GParted
+-   And apply the changes before leaving GParted
 
 ![](/images/gparted_4.png)
 ![GParted: Apply changes](/images/gparted_5.png)
 
-- We eject the USB drive and plug it back on the NAS. We boot again and see what happens. If there are no issues, we log on to the GUI and check that the filesystems are fine:
+-   We eject the USB drive and plug it back on the NAS. We boot again and see what happens. If there are no issues, we log on to the GUI and check that the filesystems are fine:
 
 ![GParted: Final Layout](/images/gparted_6.png)
 
-- First we go to System \ Update Management and we apply the available updates.
-- Then we go to System \ Date and Time and enable NTP service after specifiying the timezone.
+-   First we go to System \ Update Management and we apply the available updates.
+-   Then we go to System \ Date and Time and enable NTP service after specifiying the timezone.
 > NOTE: Don't forget to SAVE the changes and then APPLY de configuration in the menu that appears. Othenwise changes will be lost.
 
 - To make it easier to power down the system, go to System \ Power button, and change it to "Shutdown" so that we can power down the NAS without any monitor and keyboard.
@@ -136,13 +133,13 @@ Now we plug the USB drive onto a linux system and use GParted over it to reduce 
 ![Power button](/images/power-button.png)
 
 
-## USB Flash Drive installation
+## 3. USB Flash Drive installation
 
 ### Post installation tasks
 
 ### Backing up configuration
 
-## RAID installation using an USB flash drive
+## 4. RAID installation using an USB flash drive
 
 
 First install OMV on a USB drive, and boot for the first time. Shut down OMV and insert two drives you actually intend on using, and boot OMV from USB device. Once OMV is up and running, login as root and start SSH service with following command:
@@ -223,7 +220,7 @@ mkfs.ext4 -m 1 -L DATA /dev/md1
 
 And this is it, login to web interface, mount /dev/md1 and start using OMV installed on RAID1 array.
 
-## Installation using only hard drives
+## 5. RAID installation using only hard drives
 
 I did not need a pendrive. I used 4 x 4GB hard drives each. I installed the system on the first disk, then created a smaller partition on the other 3 disks. Created raid volume. Then I copied (rsync) the systems to the minor partition (raid) and functioned perfectly.
 
@@ -231,75 +228,75 @@ Finally, I deleted Disk 1 and included it in the raid scheme.
 
 For those who need something similar:
 
-# Create disk sceme
-parted -a optimal /dev/sdb mklabel gpt
+Create disk sceme
+`parted -a optimal /dev/sdb mklabel gpt
 yes
 parted -a optimal /dev/sdb mkpart grub ext2 2048s 12M
 parted -a optimal /dev/sdb mkpart swap linux-swap 12M 4096M
 parted -a optimal /dev/sdb mkpart root ext4 4096M 10240M
 parted -a optimal /dev/sdb mkpart data ext4 10240M 100%
 parted -a optimal /dev/sdb set 1 bios_grub on
-parted -a optimal /dev/sdb set 2 boot on
+parted -a optimal /dev/sdb set 2 boot on`
 
-#Copy to other discs (don’t copy to actualy system disc)
-sgdisk -R=/dev/sdc /dev/sdb
+Copy to other discs (don’t copy to actualy system disc)
+`sgdisk -R=/dev/sdc /dev/sdb
 sgdisk -G /dev/sdc
 
 sgdisk -R=/dev/sdd /dev/sdb
-sgdisk -G /dev/sdd
+sgdisk -G /dev/sdd`
 
-# Create the raid w/ 4 discs (frist disc is not in the raid in this moment)
-# We create only 2 raids in this moment. Swap area and System area
-mdadm –create /dev/md1 –level=10 –raid-devices=4 missing /dev/sdb2 /dev/sdc2 /dev/sdd2
-mdadm –create /dev/md2 –level=1 –raid-devices=4 missing /dev/sdb3 /dev/sdc3 /dev/sdd3
+Create the raid w/ 4 discs (frist disc is not in the raid in this moment)
+We create only 2 raids in this moment. Swap area and System area
+`mdadm –create /dev/md1 –level=10 –raid-devices=4 missing /dev/sdb2 /dev/sdc2 /dev/sdd2
+mdadm –create /dev/md2 –level=1 –raid-devices=4 missing /dev/sdb3 /dev/sdc3 /dev/sdd3`
 
-# Create file systems
-mkswap /dev/md1
+Create file systems
+`mkswap /dev/md1
 mkfs.ext4 /dev/md2
-mkfs.ext4 -m 1 -L DATA /dev/md3
+mkfs.ext4 -m 1 -L DATA /dev/md3`
 
-# Mount and copy system
-mkdir /mnt/root
+Mount and copy system
+`mkdir /mnt/root
 mount /dev/md2 /mnt/root/
-rsync -avx / /mnt/root
+rsync -avx / /mnt/root`
 
-# update the raid config file
-mdadm –detail –scan >> /mnt/root/etc/mdadm/mdadm.conf
+update the raid config file
+`mdadm –detail –scan >> /mnt/root/etc/mdadm/mdadm.conf`
 
-# Finde the UUID of md2 and update /mnt/root/etc/fstab
-blkid
+Find the UUID of md2 and update /mnt/root/etc/fstab
+`blkid`
 
-# Mount system
-mount –bind /dev /mnt/root/dev
+Mount system
+`mount –bind /dev /mnt/root/dev
 mount –bind /sys /mnt/root/sys
 mount –bind /proc /mnt/root/proc
-chroot /mnt/root/
+chroot /mnt/root/`
 
-# Update grub
-grub-install –recheck /dev/sdb
+Update grub
+`grub-install –recheck /dev/sdb
 grub-install –recheck /dev/sdc
 grub-install –recheck /dev/sdd
 grub-mkconfig -o /boot/grub/grub.cfg
-update-initramfs -u
+update-initramfs -u`
 
-# Ok, your system are OK. Reboot OMV.
+Ok, your system are OK. Reboot OMV.
 
-# When system up, copy the partition schema to the frist disc (system disc)
-sgdisk -R=/dev/sda /dev/sdb
-sgdisk -G /dev/sda
+When system up, copy the partition schema to the frist disc (system disc)
+`sgdisk -R=/dev/sda /dev/sdb
+sgdisk -G /dev/sda`
 
-# Add this disc to raid
-mdadm /dev/md2 –add /dev/sda3
+Add this disc to raid
+`mdadm /dev/md2 –add /dev/sda3`
 
-# Create the raid for the DATA
-mdadm –create /dev/md3 –level=10 –raid-devices=4 /dev/sda4 /dev/sdb4 /dev/sdc4 /dev/sdd4
+Create the raid for the DATA
+`mdadm –create /dev/md3 –level=10 –raid-devices=4 /dev/sda4 /dev/sdb4 /dev/sdc4 /dev/sdd4`
 
-# Ok, finaly, update the grub on frist disc
-grub-install –recheck /dev/sda
+Ok, finaly, update the grub on frist disc
+`grub-install –recheck /dev/sda
 grub-mkconfig -o /boot/grub/grub.cfg
-update-initramfs -u
+update-initramfs -u`
 
-# Finish!
+Finish!
 
 > Be careful to not use “sfdisk” command to recover partition table from the healthy disk, sfdisk does not support GPT.
 Use “sgdisk” instead.
@@ -308,13 +305,13 @@ If new disk is /dev/sdb and healthy disk is /dev/sda, then do
 > to replicate partition table from sda to sdb.
 Finally, use OMV GUI to recover RAID mirror.
 
-### References & Credits
+## 6. References and Credits
 
 This document is based on the following resources. I really thank the authors for sharing their knowledge and trouble:
 
 - Installing OpenMediaVault on RAID-1 array - https://lazic.info/josip/post/installing-openmediavault-on-raid-device/
 
 
-### Summary
+## 7. Summary
 
 - __**Objetive:**__ Cover OpenMediaVault unsupported and not recommended installation procedures, and hopefully save you some time!
