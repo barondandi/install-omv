@@ -25,7 +25,7 @@ I will be using version 5.x and only specifying here the steps which are not ref
 
 I already went through several NAS builds over the years. From a tailored made FreeBSD kernel to spin FreeNAS, openfiler, Ubuntu Server or a QNAP system.
 
-In the end I turned to OpenMediaVault, as it saves me a lot of pain for the everyday administration (and I am becoming lazy), and still gives you the full power of a Debian under the hood, that allows you any sort of tailoring, or the option to tinker if anything goes really wrong. This last past is a must for me, as I already had the experience of _**losing all the data**_ in two of my previous NASes (ZFS corruption due to lack of memory and an underpowered Annpurna Labs CPU based QNAP).
+In the end, I turned to OpenMediaVault, as it saves me a lot of pain for the everyday administration (and I am becoming lazy), and still gives you the full power of a Debian under the hood, that allows you any sort of tailoring, or the option to tinker if anything goes really wrong. This last past is a must for me, as I already had the experience of _**losing all the data**_ in two of my previous NASes (ZFS corruption due to lack of memory and an under-powered Annapurna Labs CPU based QNAP).
 
 You might want to go through this tutorial for some of the following reasons:
 -   You have no extra/free SATA ports in your NAS and want to make sure you do a proper installation on a USB drive, wihtout it dying after few weeks or months.
@@ -34,7 +34,7 @@ You might want to go through this tutorial for some of the following reasons:
 
 
 ## 1. Hardware used
-In case it's of any interest this is the hardware I will be using for the installation:
+In case it's of any interest, this is the hardware I will be using for the installation:
 
 -   **Motherboard:** ASRock H370M-ITX/ac Mini ITX LGA1151 Motherboard
     > Mini ITX format and with 6 SATA 6Gb connectors on the board.
@@ -45,11 +45,11 @@ In case it's of any interest this is the hardware I will be using for the instal
 -   **Memory:** Corsair Vengeance LPX 8 GB (1 x 8 GB) DDR4-2400 Memory
     > One single DIMM as I might upgrade with a second one if I start using the system to spin containers or implement ZFS.
     > I would have preferred Crucial Ballistix but it was not available when ordering at a reasonable price.
-    > Make sure to verify that it's supported in the motherboard documentation. Also check latencies.
+    > Make sure to verify that it's supported in the motherboard documentation. Also, check latencies.
 
 -   **Fan:** Noctua NH-L9i
     > Very quiet and low profile.
-    > I make it low profile, as when I upgrade the NAS hardware, I can easily reuse and turn this into a very small mediacenter.
+    > I make it low profile, as when I upgrade the NAS hardware, I can easily reuse and turn the old board into a very small mediacenter.
 
 -   **Case:** Fractal Design Array R2 Mini ITX NAS Case with 300 Watt SFX Power Supply Unit
     > No longer available. Now replaced for the Fractal Design Node 304 Mini ITX Tower Case.
@@ -229,72 +229,112 @@ Finally, I deleted Disk 1 and included it in the raid scheme.
 For those who need something similar:
 
 Create disk sceme
-`parted -a optimal /dev/sdb mklabel gpt
+
+```shell
+parted -a optimal /dev/sdb mklabel gpt
 yes
 parted -a optimal /dev/sdb mkpart grub ext2 2048s 12M
 parted -a optimal /dev/sdb mkpart swap linux-swap 12M 4096M
 parted -a optimal /dev/sdb mkpart root ext4 4096M 10240M
 parted -a optimal /dev/sdb mkpart data ext4 10240M 100%
 parted -a optimal /dev/sdb set 1 bios_grub on
-parted -a optimal /dev/sdb set 2 boot on`
+parted -a optimal /dev/sdb set 2 boot on
+```
 
 Copy to other discs (don’t copy to actualy system disc)
-`sgdisk -R=/dev/sdc /dev/sdb
+
+```shell
+sgdisk -R=/dev/sdc /dev/sdb
 sgdisk -G /dev/sdc
 
 sgdisk -R=/dev/sdd /dev/sdb
-sgdisk -G /dev/sdd`
+sgdisk -G /dev/sdd
+```
 
 Create the raid w/ 4 discs (frist disc is not in the raid in this moment)
 We create only 2 raids in this moment. Swap area and System area
-`mdadm –create /dev/md1 –level=10 –raid-devices=4 missing /dev/sdb2 /dev/sdc2 /dev/sdd2
-mdadm –create /dev/md2 –level=1 –raid-devices=4 missing /dev/sdb3 /dev/sdc3 /dev/sdd3`
+
+```shell
+mdadm –create /dev/md1 –level=10 –raid-devices=4 missing /dev/sdb2 /dev/sdc2 /dev/sdd2
+mdadm –create /dev/md2 –level=1 –raid-devices=4 missing /dev/sdb3 /dev/sdc3 /dev/sdd3
+```
 
 Create file systems
-`mkswap /dev/md1
+
+```shell
+mkswap /dev/md1
 mkfs.ext4 /dev/md2
-mkfs.ext4 -m 1 -L DATA /dev/md3`
+mkfs.ext4 -m 1 -L DATA /dev/md3
+```
 
 Mount and copy system
-`mkdir /mnt/root
+
+```shell
+mkdir /mnt/root
 mount /dev/md2 /mnt/root/
-rsync -avx / /mnt/root`
+rsync -avx / /mnt/root
+```
 
 update the raid config file
-`mdadm –detail –scan >> /mnt/root/etc/mdadm/mdadm.conf`
+
+```shell
+mdadm –detail –scan >> /mnt/root/etc/mdadm/mdadm.conf
+```
 
 Find the UUID of md2 and update /mnt/root/etc/fstab
-`blkid`
+
+```shell
+blkid
+```
 
 Mount system
-`mount –bind /dev /mnt/root/dev
+
+```shell
+mount –bind /dev /mnt/root/dev
 mount –bind /sys /mnt/root/sys
 mount –bind /proc /mnt/root/proc
-chroot /mnt/root/`
+chroot /mnt/root/
+```
 
 Update grub
-`grub-install –recheck /dev/sdb
+
+```shell
+grub-install –recheck /dev/sdb
 grub-install –recheck /dev/sdc
 grub-install –recheck /dev/sdd
 grub-mkconfig -o /boot/grub/grub.cfg
-update-initramfs -u`
+update-initramfs -u
+```
 
 Ok, your system are OK. Reboot OMV.
 
+
 When system up, copy the partition schema to the frist disc (system disc)
-`sgdisk -R=/dev/sda /dev/sdb
-sgdisk -G /dev/sda`
+
+```shell
+sgdisk -R=/dev/sda /dev/sdb
+sgdisk -G /dev/sda
+```
 
 Add this disc to raid
-`mdadm /dev/md2 –add /dev/sda3`
+
+```shell
+mdadm /dev/md2 –add /dev/sda3
+```
 
 Create the raid for the DATA
-`mdadm –create /dev/md3 –level=10 –raid-devices=4 /dev/sda4 /dev/sdb4 /dev/sdc4 /dev/sdd4`
+
+```shell
+mdadm –create /dev/md3 –level=10 –raid-devices=4 /dev/sda4 /dev/sdb4 /dev/sdc4 /dev/sdd4
+```
 
 Ok, finaly, update the grub on frist disc
-`grub-install –recheck /dev/sda
+
+```shell
+grub-install –recheck /dev/sda
 grub-mkconfig -o /boot/grub/grub.cfg
-update-initramfs -u`
+update-initramfs -u
+```
 
 Finish!
 
