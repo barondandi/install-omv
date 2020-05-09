@@ -19,7 +19,7 @@ I will be using version 5.x and only specifying here the steps which are not ref
 3.  [USB Flash Drive installation](#3.-USB-Flash-Drive-installation)
     -   [Reduce OS partition size](#Reduce-OS-partition-size)
     -   [Post installation tasks](#Post-installation-tasks)
-    -   [Backing up configuration](#Backing-up-configuration)
+    -   [Backing up USB](#Backing-up-USB)
 4.  [RAID installation using an USB flash drive](#4.-RAID-installation-using-an-USB-flash-drive)
 5.  [RAID installation using only hard drives](#5.-RAID-installation-using-only-hard-drives)
 6.  [References and Credits](#6.-references-and-credits)
@@ -164,8 +164,67 @@ We eject the USB drive and plug it back on the NAS. We boot again and see what h
 
 ![Power button](/images/power-button.png)
 
-### Backing up configuration
+### Backing up USB
 
+We power down the NAS, disconnect the USB drive, and connect it to a Linux box. _If you use other OS, you can easily search other tools and tutorials in Internet._
+
+The tool we’ll use to create the bootable drive clone from the command line is the `dd` command.
+> NOTE: If the USB drive gives any error you could try replacing `dd` by `ddrescue` command.
+
+> **Warning**: `dd` command must be used very carefully. dd will do exactly what you tell it to, as soon as you tell it. There are no “Are you sure” questions or chances for backing out. This means that you could overwrite a drive you don't intend to if you are not careful.
+
+We need to know what device your USB drive is associated with. That way you know for sure what device identity to pass to dd on the command line.
+
+In a terminal window type the following command. The lsblk command lists the block devices on your computer. Each drive has a block device associated with it.
+
+```shell
+lsblk
+```
+
+This is an optput example:
+
+```shell
+[user@fedora ~]$ lsblk
+NAME                                            MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINT
+sdb                                               8:16   1  29.9G  0 disk  
+├─sdb1                                            8:17   1   512M  0 part  
+├─sdb2                                            8:18   1     8G  0 part  /run/media/user/7e4ce9ae-1ed5-4041-8dbd-5f2f8b04375a
+└─sdb3                                            8:19   1   7.7G  0 part  
+nvme0n1                                         259:0    0 894.3G  0 disk  
+├─nvme0n1p1                                     259:1    0   200M  0 part  /boot/efi
+├─nvme0n1p2                                     259:2    0     1G  0 part  /boot
+└─nvme0n1p3                                     259:3    0 893.1G  0 part  /  
+
+```
+
+The output from lsblk will show the drives currently connected to your computer. There is one usb drive called `sdb` and there is one internal hard drive on this machine called `nvme0n1`.
+
+We can see the three partitions we previously saw on GParted.
+
+If you are uncertain of which is the USB drive, you can run the `lsblk` command **before** inserting the USB, and then again, **after** inserting it, and check which is the new drive that appeared.
+
+The identifier we need to use is the one representing the drive, not either of the partitions. In our example this is sdb. Regardless of how it is named on your computer, the device that was not in the previous lsblk listing must be the USB drive.
+
+The command we are going to issue to `dd` is as follows:
+
+```shell
+sudo dd if=/dev/sdb of=Downloads/YYYY-MM-DD_omv.img conv=fdatasync bs=4M status=progress
+```
+
+Where the explanation of the different parameters follow:
+- **sudo**: You need to be a superuser to issue dd commands. You will be prompted for your password.
+- **dd**: The name of the command we’re using.
+- **bs=4M**: The -bs (blocksize) option defines the size of each chunk that is read from the input file and wrote to the output device. 4 MB is a good choice because it gives decent throughput and it is an exact multiple of 4 KB, which is the blocksize of the ext4 filesystem. This gives an efficient read and write rate.
+- **if=/dev/sdb**: The -if (input file) option requires the path and name of the USB drive you are using as the input file. This is the value we identified by using the lsblk command previously. in our example it is sdb, so we are using /dev/sdb. Your USB drive might have a different identifier. Make sure you provide the correct identifier.
+- **of=Downloads/YYYY-MM-DD_omv.img**: The -of (output file) is the path and name of the file you are using as the output file. In our case we are placing the clone in a file named "YYYY-MM-DD_omv.img" on the Download folder.
+- **conv=fdatasync**: The conv parameter dictates how dd converts the input file as it is written to the output device. dd uses kernel disk caching when it writes to the USB drive. The fdatasync modifier ensure the write buffers are flushed correctly and completely before the creation process is flagged as having finished. This parameter is not relevant when doing the backups, but it is very important for the restoration processes
+- **status=progress**: To see progress while making an image with dd.
+
+When the bootable USB drive image has been created dd reports the amount of data that was written to the USB drive, the elapsed time in seconds and the average data transfer rate.
+
+creation summary message
+
+You can check the bootable USB drive works by rebooting your computer and booting from the USB drive, or you can try booting from it in another computer.
 
 
 ## 4. RAID installation using an USB flash drive
