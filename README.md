@@ -30,7 +30,7 @@ I already went through several NAS builds over the years. From a tailored made F
 In the end, I turned to OpenMediaVault, as it saves me a lot of pain for the everyday administration (and I am becoming lazy), and still gives you the full power of a Debian under the hood, that allows you any sort of tailoring, or the option to tinker if anything goes really wrong. This last past is a must for me, as I already had the experience of _**losing all the data**_ in two of my previous NASes (ZFS corruption due to lack of memory and an under-powered Annapurna Labs CPU based QNAP).
 
 You might want to go through this tutorial for some of the following reasons:
--   You have no extra/free SATA ports in your NAS and want to make sure you do a proper installation on a USB drive, wihtout it dying after few weeks or months.
+-   You have no extra/free SATA ports in your NAS and want to make sure you do a proper installation on a USB drive, without it dying after few weeks or months.
 -   You install on a drive with plenty of space. As OMV does not support using OS drive for data storage (as noted in OMV installation guide) you waste a lot of free space on that device.
 -   You want to RAID protect your OS to make sure you keep operation even if one of your boot drives fail.
 
@@ -68,20 +68,33 @@ In case it's of any interest, this is the hardware I will be using for the insta
 
 ### USB is not recommended, so why?
 
+-   I would like to free all SATA ports in the motherboard so that the NAS can be expanded to the fullest.
+    > Though initially I will start with 4 disks, I want to be able to expand to 6 in the future (as 8TB drive prices decrease).
+
+-   The **protection** I will be using is RAID 6 meaning I will be investing 2 drives in parity. If I want to be space effective I need as many drives as possible with the same layout as the protection ones (meaning same size and partitioning _-thus, OS in a RAID protected partition is discarded-_):
+    -   RAID 5 is too risky in big drives.
+    -   RAID 1+0 is less space effective as we go over 4 drives.
+
+-   To compensate for the USB chances of failure I will be taking the following measures:
+    -   Enable the openmediavault-flashmemory plugin. This lowers the amount of writes to the USB flash drive. Also swap partition will be disabled on the drive (this will surely impact performance, but minimize drive wear).
+    -   Automate USB backups, so that recovery is easy if anything happens.
+
 ### Generic recommendations
-
-### USB specific recommendations
-
 
 -   In motherboards with several Monitor ports, usually only one is enabled initially. Find it and connect the monitor to follow with installation. Later on this can be changed in the BIOS.
     > In my case it was one of the 2 HDMI provided.
+
 -   Get inside the BIOS menu and make sure that:
+
     -   All the fans are working properly. Proper ventilation of the drives is a must and the main reasons for drives failures are temperature and vibration.
         > In my case, the chassis fan was not working. I had to change the control mode from "Auto" to "PWM Mode".
+
     -   Disable the hardware that will not be used.
         > I disabled the audio and the WiFi
+
     -   Make sure S.M.A.R.T. is enabled for the hard drives.
 
+### USB specific recommendations
 
 - During installation I was given the choice of using one of the two 1Gb Intel ethernet port, I219V or I211AT. As initially I was going to use one only, I selected the I219-V the other one goes over PCIE (that's what I read at least).
 - After automaticaly assigning IP using DNS, I pressed "ESC" and I was given the option to manually configure the network. This is ideal, as I need to set a fixed IP, and I can do that from the begining.
