@@ -68,35 +68,51 @@ In case it's of any interest, this is the hardware I will be using for the insta
 
 ### USB is not recommended, so why?
 
--   I would like to free all SATA ports in the motherboard so that the NAS can be expanded to the fullest.
-    > Though initially I will start with 4 disks, I want to be able to expand to 6 in the future (as 8TB drive prices decrease).
+I would like to free all SATA ports in the motherboard so that the NAS can be expanded to the fullest.
 
--   The **protection** I will be using is RAID 6 meaning I will be investing 2 drives in parity. If I want to be space effective I need as many drives as possible with the same layout as the protection ones (meaning same size and partitioning _-thus, OS in a RAID protected partition is discarded-_):
-    -   RAID 5 is too risky in big drives.
-    -   RAID 1+0 is less space effective as we go over 4 drives.
+> Though initially I will start with 4 disks, I want to be able to expand to 6 in the future (as 8TB drive prices decrease).
 
--   To compensate for the USB chances of failure I will be taking the following measures:
-    -   Enable the openmediavault-flashmemory plugin. This lowers the amount of writes to the USB flash drive. Also swap partition will be disabled on the drive (this will surely impact performance, but minimize drive wear).
-    -   Automate USB backups, so that recovery is easy if anything happens.
+The **protection** I will be using is RAID 6 meaning I will be investing 2 drives in parity. If I want to be space effective I need as many drives as possible with the same layout as the protection ones (meaning same size and partitioning _-thus, OS in a RAID protected partition is discarded-_):
+-   RAID 5 is too risky in big drives.
+-   RAID 1+0 is less space effective as we go over 4 drives.
+
+To compensate for the USB chances of failure I will be taking the following measures:
+-   Enable the openmediavault-flashmemory plugin. This lowers the amount of writes to the USB flash drive. Also swap partition will be disabled on the drive (this will surely impact performance, but minimize drive wear).
+-   Automate USB backups, so that recovery is easy if anything happens.
 
 ### Generic recommendations
 
--   In motherboards with several Monitor ports, usually only one is enabled initially. Find it and connect the monitor to follow with installation. Later on this can be changed in the BIOS.
+In motherboards with several Monitor ports, usually only one is enabled initially. Find it and connect the monitor to follow with installation. Later on this can be changed in the BIOS.
     > In my case it was one of the 2 HDMI provided.
 
--   Get inside the BIOS menu and make sure that:
+Get inside the BIOS menu and make sure that:
 
-    -   All the fans are working properly. Proper ventilation of the drives is a must and the main reasons for drives failures are temperature and vibration.
-        > In my case, the chassis fan was not working. I had to change the control mode from "Auto" to "PWM Mode".
+-   All the fans are working properly. Proper ventilation of the drives is a must. The main reasons for drives failures are temperature and vibration.
+    > In my case, the chassis fan was not working. I had to change the control mode from "Auto" to "PWM Mode".
 
-    -   Disable the hardware that will not be used.
-        > I disabled the audio and the WiFi
+-   Disable the hardware that will not be used.
+    > I disabled the audio and the WiFi
 
-    -   Make sure S.M.A.R.T. is enabled for the hard drives.
+-   Make sure S.M.A.R.T. is enabled for the hard drives.
+
+During installation I was given the choice of using one of the two 1Gb Intel Ethernet port, I219V or I211AT. As initially I was going to use one only, I selected the I219-V the other one goes over PCIE (_that's what I read at least_).
+
 
 ### USB specific recommendations
 
-- During installation I was given the choice of using one of the two 1Gb Intel ethernet port, I219V or I211AT. As initially I was going to use one only, I selected the I219-V the other one goes over PCIE (that's what I read at least).
+If you get a "_No root file system_" error when partitioning the disks, there are several things you can do:
+
+-   Enter the BIOS menu, and check the USB configuration. In my case I had to change the "Legacy USB Support" to "UEFI Setup Only" for the installation to work.
+-   Format the USB Flash drive in EXT4 and make sure you con mount it and write into it. I had to first format it to FAT32 in a Windows system, and then move to a Linux system and overwrite the partition with EXT4 (no idea of the reason, but for me it was the only way to make it work).
+
+You might get installation giving an error after some percentage during the "Installing the system..." phase. In my case it was due to an USB drive without enough sustained write speed.
+
+> I had to update to a faster one. You can check USB drives speed tests here: https://usb.userbenchmark.com/. Also, make sure you are connecting it to an USB 3.x connector on the motherboard.
+
+## 3. USB Flash Drive installation
+
+We 
+
 - After automaticaly assigning IP using DNS, I pressed "ESC" and I was given the option to manually configure the network. This is ideal, as I need to set a fixed IP, and I can do that from the begining.
   > I also used this step to specify 3 name servers separating the IPs by spaces: Open DNS (208.67.220.220), Google (8.8.8.8) and a third one for my local Internet provider.
 
@@ -104,10 +120,6 @@ In case it's of any interest, this is the hardware I will be using for the insta
 
   > NOTE: If you run into any trouble during installation, you can press "ESC" key and go back to a previous step.  
 
-- If you get a "No root file system" error when partitioning the disks, there are several things you can do:
-  - Enter the BIOS menu, and check the USB configuration. In my case I had to change the "Legacy USB Support" to "UEFI Setup Only" for the installation to work.
-  - Format the USB Flash drive in EXT4 and make sure you con mount it and write into it. I had to first format it to FAT32 in a Windows system, and then move to a Linux system and overwrite the partition with EXT4 (no idea of the reason, but for me it was the only way to make it work).
-- You might get installation giving an error after some percentage during the "Installing the system..." phase. In my case it was due to an USB drive without enough sustained write speed. I had to update to a faster one. You can check USB drives speed tests here: https://usb.userbenchmark.com/. Also, make sure you are connecting it to an USB 3.x connector on the motherboard.
 
 - After the first reboot IPs are not properly configured. Please reboot again, this second time, the IP shoild have been set to the fixed IP specified during installation.
 
@@ -147,12 +159,11 @@ Now we plug the USB drive onto a linux system and use GParted over it to reduce 
 
 ![Power button](/images/power-button.png)
 
-
-## 3. USB Flash Drive installation
-
 ### Post installation tasks
 
 ### Backing up configuration
+
+
 
 ## 4. RAID installation using an USB flash drive
 
