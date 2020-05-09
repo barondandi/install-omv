@@ -17,6 +17,7 @@ I will be using version 5.x and only specifying here the steps which are not ref
     -   [Generic recommendations](#Generic-recommendations)
     -   [USB specific recommendations](#USB-specific-recommendations)
 3.  [USB Flash Drive installation](#3.-USB-Flash-Drive-installation)
+    -   [Reduce OS partition size](#Reduce-OS-partition-size)
     -   [Post installation tasks](#Post-installation-tasks)
     -   [Backing up configuration](#Backing-up-configuration)
 4.  [RAID installation using an USB flash drive](#4.-RAID-installation-using-an-USB-flash-drive)
@@ -111,17 +112,15 @@ You might get installation giving an error after some percentage during the "Ins
 
 ## 3. USB Flash Drive installation
 
-We 
+We follow installation instructions in the OMV guide, "Installation on USB" ([https://openmediavault.readthedocs.io/en/5.x/installation/on_usb.html](https://openmediavault.readthedocs.io/en/5.x/installation/on_usb.html)), that simply state to follow the "Installation using an ISO image" ([https://openmediavault.readthedocs.io/en/5.x/installation/via_iso.html](https://openmediavault.readthedocs.io/en/5.x/installation/via_iso.html)) and afterwards enable the openmediavault-flashmemory plugin as we will be detailing. Some comments and issues follow:
 
-- After automaticaly assigning IP using DNS, I pressed "ESC" and I was given the option to manually configure the network. This is ideal, as I need to set a fixed IP, and I can do that from the begining.
-  > I also used this step to specify 3 name servers separating the IPs by spaces: Open DNS (208.67.220.220), Google (8.8.8.8) and a third one for my local Internet provider.
+-   After automaticaly assigning IP using DNS, I pressed "ESC" and I was given the option to manually configure the network. This is ideal, as I need to set a fixed IP, and I can do that from the begining.
+    > I also used this step to specify 3 name servers separating the IPs by spaces: Open DNS (208.67.220.220), Google (8.8.8.8) and a third one for my local Internet provider.
 
-- You get a warning about UEFI mode installation. Force it with no problem.
+-   You get a warning about UEFI mode installation. Force it with no problem.
+    > **NOTE: If you run into any trouble during installation, you can press "ESC" key and go back to a previous step.**  
 
-  > NOTE: If you run into any trouble during installation, you can press "ESC" key and go back to a previous step.  
-
-
-- After the first reboot IPs are not properly configured. Please reboot again, this second time, the IP shoild have been set to the fixed IP specified during installation.
+-   After the first reboot IPs are not properly configured. Please reboot again, this second time, the IP shoild have been set to the fixed IP specified during installation.
 
 From here, you can login with root/<root_password> and type the command
 ```shell
@@ -133,6 +132,10 @@ Now you can shutdown the array to follow with the procedure:
 ```shell
 shutdown -h now
 ```
+
+### Reduce OS partition size
+
+
 Now we plug the USB drive onto a linux system and use GParted over it to reduce the OS partition size. I will be leaving it at 8Gb, as it is more than enough and leave space to expand afterwards. This way the OS partition to backup will be smaller and take less time and space.
 
 ![GParted: Original Layout](/images/gparted_1.png)
