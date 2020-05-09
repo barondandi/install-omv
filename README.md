@@ -135,24 +135,26 @@ shutdown -h now
 
 ### Reduce OS partition size
 
-
-Now we plug the USB drive onto a linux system and use GParted over it to reduce the OS partition size. I will be leaving it at 8Gb, as it is more than enough and leave space to expand afterwards. This way the OS partition to backup will be smaller and take less time and space.
+Now we plug the USB drive onto a linux system and use GParted over it to reduce the OS partition size. I will be leaving it at 8Gb, as it is more than enough and leave space to expand afterwards. This way the OS partition to backup will be smaller and take less time and space (_allowing recovery over smaller USBs if needed_).
 
 ![GParted: Original Layout](/images/gparted_1.png)
 
--   We right click and Unmount the /dev/sdx2 partition.
--   We can now resize it to the desired amount (I used 8192GiB)
+We right click and `unmount` the /dev/sdx2 partition.
+
+We can now resize it to the desired amount (I used 8192GiB):
 
 ![GParted: Resize](/images/gparted_2.png)
 
--   And apply the changes before leaving GParted
+And apply the changes before leaving GParted:
 
 ![](/images/gparted_4.png)
 ![GParted: Apply changes](/images/gparted_5.png)
 
--   We eject the USB drive and plug it back on the NAS. We boot again and see what happens. If there are no issues, we log on to the GUI and check that the filesystems are fine:
+We eject the USB drive and plug it back on the NAS. We boot again and see what happens. If there are no issues, we log on to the GUI and check that the filesystems are fine:
 
 ![GParted: Final Layout](/images/gparted_6.png)
+
+### Post installation tasks
 
 -   First we go to System \ Update Management and we apply the available updates.
 -   Then we go to System \ Date and Time and enable NTP service after specifiying the timezone.
@@ -161,8 +163,6 @@ Now we plug the USB drive onto a linux system and use GParted over it to reduce 
 - To make it easier to power down the system, go to System \ Power button, and change it to "Shutdown" so that we can power down the NAS without any monitor and keyboard.
 
 ![Power button](/images/power-button.png)
-
-### Post installation tasks
 
 ### Backing up configuration
 
