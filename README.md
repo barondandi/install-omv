@@ -154,6 +154,12 @@ We eject the USB drive and plug it back on the NAS. We boot again and see what h
 
 ![GParted: Final Layout](/images/gparted_6.png)
 
+In case we get an "UNEXPECTED INCONSISTENCY" over any of the partitions and we are told to run `fsck` manually, we simply need to do that and reboot. For example if we get an "The root filesystem on /dev/sda1 requires a manual fcsk" message, we would run:
+
+```shell
+fcsk /dev/sda1
+```
+
 ### Post installation tasks
 
 -   First we go to System \ Update Management and we apply the available updates.
