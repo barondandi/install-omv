@@ -187,7 +187,7 @@ In a terminal window type the following command. The lsblk command lists the blo
 lsblk
 ```
 
-This is an optput example:
+This is an output example:
 
 ```shell
 [user@fedora ~]$ lsblk
@@ -226,9 +226,53 @@ Where the explanation of the different parameters follow:
 - **conv=fdatasync**: The conv parameter dictates how dd converts the input file as it is written to the output device. dd uses kernel disk caching when it writes to the USB drive. The fdatasync modifier ensure the write buffers are flushed correctly and completely before the creation process is flagged as having finished. This parameter is not relevant when doing the backups, but it is very important for the restoration processes
 - **status=progress**: To see progress while making an image with dd.
 
+> NOTE: If you get read errors, you can use the parameter `conv=noerror` to tell `dd` to continue operation, ignoring all read errors. Or even better, install and use `ddrescue` instead of `dd`.
+
 When the bootable USB drive image has been created dd reports the amount of data that was written to the USB drive, the elapsed time in seconds and the average data transfer rate.
 
-creation summary message
+This is an output example:
+
+```shell
+[user@fedora ~]$ sudo dd if=/dev/sdb of=Downloads/YYYY-MM-DD_omv.img conv=fdatasync bs=4M status=progress
+32019316736 bytes (32 GB, 30 GiB) copied, 416 s, 77.0 MB/s
+7648+1 records in
+7648+1 records out
+32080200192 bytes (32 GB, 30 GiB) copied, 423.676 s, 75.7 MB/s
+
+[user@fedora ~]$ ls -ahlF Downloads/YYYY*
+-rw-r--r--. 1 root root 30G May 10 17:28 Downloads/YYYY-MM-DD_omv.img
+```
+
+As you can see the output is a bit by bit copy of the USB drive, meaning there are lots of zeros in it and thus wasted space. We can easily sort this out by compressing the image afterwards, or doing everything on the same command:
+
+```shell
+sudo dd if=/dev/sdb conv=fdatasync bs=4M status=progress | gzip -c > Downloads/YYYY-MM-DD_omv.gz
+```
+
+If we check the output, we really saved a lot of space:
+
+```shell
+[user@fedora ~]$ ls -ahlF Downloads/YYYY*
+-rw-r--r--. 1 user users  30G May 10 17:28 Downloads/YYYY-MM-DD_omv.img
+-rw-r--r--. 1 user users 1.3G May 10 17:28 Downloads/YYYY-MM-DD_omv.img.gz
+
+[user@fedora ~]$ gzip -l Downloads/YYYY-MM-DD_omv.img.gz
+         compressed        uncompressed  ratio uncompressed_name
+         1372693831          2015429120  31.9% Downloads/YYYY-MM-DD_omv.img
+```
+
+If we need to **build another USB drive** from the created image the command would be (if we did not compress it):
+
+```shell
+sudo dd if=Downloads/YYYY-MM-DD_omv.img of=/dev/sdb conv=fdatasync bs=4M status=progress
+```
+
+If we used gzip to save space this would be the command:
+gunzip -c IMAGE.HERE-GZ | dd of=/dev/OUTPUT/DEVICE-HERE
+
+```shell
+sudo gzip -c Downloads/YYYY-MM-DD_omv.gz | dd of=/dev/sdb conv=fdatasync bs=4M status=progress
+```
 
 You can check the bootable USB drive works by rebooting your computer and booting from the USB drive, or you can try booting from it in another computer.
 
