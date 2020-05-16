@@ -165,16 +165,58 @@ fcsk /dev/sda1
 
 -   First we go to System \ Update Management and we apply the available updates.
 -   Then we go to System \ Date and Time and enable NTP service after specifying the timezone.
-> NOTE: Don't forget to SAVE the changes and then APPLY de configuration in the menu that appears. Otherwise changes will be lost.
+    > NOTE: Don't forget to SAVE the changes and then APPLY de configuration in the menu that appears. Otherwise changes will be lost.
 
-- To make it easier to power down the system, go to System \ Power button, and change it to "Shutdown" so that we can power down the NAS without any monitor and keyboard.
+-   We go to Services \ SSH and enable the service. This way you we can connect to OMV remotely via SSH, it’s easier to work that way.
+
+-   To make it easier to power down the system, go to System \ Power button, and change it to "Shutdown" so that we can power down the NAS without any monitor and keyboard.
 
 ![Power button](/images/power-button.png)
 
 ### Enable flashmemory plugin
 
-Enable the openmediavault-flashmemory plugin. This lowers the amount of writes to the USB flash drive, making sure you can enjoy it for a long time.
+To enable the openmediavault-flashmemory plugin, first we need to enable OMV-Extras.
+-   The guide to do it is here: [https://forum.openmediavault.org/index.php?thread/5549-omv-extras-org-plugin/](https://forum.openmediavault.org/index.php?thread/5549-omv-extras-org-plugin/)
+-   The list of plugins that it enables is here (for OMV 5.x): [https://bintray.com/beta/#/openmediavault-plugin-developers/usul?tab=packages](https://bintray.com/beta/#/openmediavault-plugin-developers/usul?tab=packages)
 
+To install the preferred method is to run from the command line as root (you can check in the guide an alternative method from OMV web interface if needed):
+> NOTE:  Remember that the SSH should be enabled, and it is easy to copy and and paste the commands from a terminal.
+
+```shell
+wget -O - https://github.com/OpenMediaVault-Plugin-Developers/packages/raw/master/install | bash
+```
+
+After running this command if we go to the web interface System \ Plugins we see that the openmediavault-omvextrasorg is enabled.
+![Plugins: OMV Extras](/images/plugins_1.png)
+
+Several new plugins have appeared, among them openmediavault-flashmemory. We install the plugin:
+![Plugins: Install flashmemory](/images/plugins_2.png)
+
+A new category also appears: System \ OMV-Extras. If we are not going to use it, we disable the Backports.
+
+Just in case, to avoid issues, we reboot the NAS. Then we follow the optional procedures specified in Storage \ Flash Memory (openmediavault-flashmemory plugin). With this we disable the swap partition on the USB drive. Very likely this will impact performace, but there was activity over the drive with it enabled.
+
+Fstab (/etc/fstab) needs to be changed manually. Following these steps to change:
+
+1.  Login as root locally or via ssh
+2.  Execute the following command: `nano /etc/fstab`
+3.  Add noatime and nodiratime to root options. See before and after example lines:
+    -   BEFORE: `UUID=ccd327d4-a1ed-4fd2-b356-3b492c6f6c34 / ext4 errors=remount-ro 0 1`
+    -   AFTER: `UUID=ccd327d4-a1ed-4fd2-b356-3b492c6f6c34 / ext4 noatime,nodiratime,errors=remount-ro 0 1`
+4.  Comment out the swap partition. See before and after example lines (only need to add a # to beginning of the line):
+    -   BEFORE: `UUID=a3c989d8-e12b-41d3-b021-098155d6b21b none swap sw 0 0`
+    -   AFTER: `#UUID=a3c989d8-e12b-41d3-b021-098155d6b21b none swap sw 0 0`
+5.  Ctrl-o to save
+6.  Ctrl-x to exit
+7.  If you disable swap, initramfs resume should fixed to avoid mdadm messages.
+    -   Remove the resume file: `rm /etc/initramfs-tools/conf.d/resume`
+    -   Update initramfs: `update-initramfs -u`
+8.  On systems using GPT, swap will still be auto-detected. The swap partition should be turned off and wiped.
+    -   Find the swap partition with: `blkid | grep swap`
+    -   Example output where /dev/sda2 is the swap partition: `/dev/sda2: UUID="01c2d1ab-354b-4e2b-8d7c-ca35793f5fe7" TYPE="swap" PARTUUID="4f64854c-02"`
+    -   Disable the swap partition with swapoff: `swapoff /dev/sda2`
+    -   Wipe the swap partition with wipefs: `wipefs -a /dev/sda2`
+9.  Reboot
 
 ### Backing up USB
 
@@ -286,13 +328,9 @@ You can check the bootable USB drive works by rebooting your computer and bootin
 ## 4. RAID installation using an USB flash drive
 
 
-First install OMV on a USB drive, and boot for the first time. Shut down OMV and insert two drives you actually intend on using, and boot OMV from USB device. Once OMV is up and running, login as root and start SSH service with following command:
+First install OMV on a USB drive, and boot for the first time. Shut down OMV and insert two drives you actually intend on using, and boot OMV from USB device.
 
-service ssh start
-
-omv-install-2
-
-this way you can connect to OMV remotely via SSH, it’s easier to work that way. Now that you are logged in via SSH you need to determine your drives, I use lsscsi for that, but you can use whatever you want. In my demonstration I have OMV installed on /dev/sda, while /dev/sdb and /dev/sdc are SATA drives.
+ Now that you are logged in via SSH you need to determine your drives, I use lsscsi for that, but you can use whatever you want. In my demonstration I have OMV installed on /dev/sda, while /dev/sdb and /dev/sdc are SATA drives.
 
 First we need to create partitions on SATA drives, I will use parted for creating 3 partitions, first for GRUB, second for OMV root, and third for data.
 
