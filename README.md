@@ -20,12 +20,12 @@ I will be using version 5.x and only specifying here the steps which are not ref
     -   [Reduce OS partition size](#Reduce-OS-partition-size)
     -   [Post installation tasks](#Post-installation-tasks)
     -   [Enable flashmemory plugin](#Enable-flashmemory-plugin)
+    -   [Finish configuration](#Finish-configuration)
     -   [Backing up USB](#Backing-up-USB)
 4.  [RAID installation using an USB flash drive](#4.-RAID-installation-using-an-USB-flash-drive)
 5.  [RAID installation using only hard drives](#5.-RAID-installation-using-only-hard-drives)
 6.  [References and Credits](#6.-references-and-credits)
 7.  [Summary](#7.-summary)
-
 
 I already went through several NAS builds over the years. From a tailored made FreeBSD kernel to spin FreeNAS, openfiler, Ubuntu Server or a QNAP system.
 
@@ -217,6 +217,21 @@ Fstab (/etc/fstab) needs to be changed manually. Following these steps to change
     -   Disable the swap partition with swapoff: `swapoff /dev/sda2`
     -   Wipe the swap partition with wipefs: `wipefs -a /dev/sda2`
 9.  Reboot
+
+### Finish configuration
+
+We power down the NAS, connect the hard disk drives, and restart the system.
+
+Fist we **enable S.M.A.R.T.** over the added drives. Thus we can check when is likely that one of the drives fails. We can do that from Storage \ S.M.A.R.T. (not supported for the USB flash drive). First we enable it on the "Settings" tab, and after on the individual drives on the "Devices" tab:
+![SMART: Devices](/images/smart_1.png)
+
+We configure the RAID protection we desire in Storage \ RAID Management:
+![RAID: Created](/images/raid_1.png)
+
+Then we create and mount the filesystems over the created RAID devices from Storage \ File Systems:
+![FILESYSTEM: Created](/images/filesystem_1.png)
+
+We create a user
 
 ### Backing up USB
 
