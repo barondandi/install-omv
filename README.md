@@ -19,6 +19,7 @@ I will be using version 5.x and only specifying here the steps which are not ref
 3.  [USB Flash Drive installation](#3.-USB-Flash-Drive-installation)
     -   [Reduce OS partition size](#Reduce-OS-partition-size)
     -   [Post installation tasks](#Post-installation-tasks)
+    -   [Enable flashmemory plugin](#Enable-flashmemory-plugin)
     -   [Backing up USB](#Backing-up-USB)
 4.  [RAID installation using an USB flash drive](#4.-RAID-installation-using-an-USB-flash-drive)
 5.  [RAID installation using only hard drives](#5.-RAID-installation-using-only-hard-drives)
@@ -163,12 +164,17 @@ fcsk /dev/sda1
 ### Post installation tasks
 
 -   First we go to System \ Update Management and we apply the available updates.
--   Then we go to System \ Date and Time and enable NTP service after specifiying the timezone.
-> NOTE: Don't forget to SAVE the changes and then APPLY de configuration in the menu that appears. Othenwise changes will be lost.
+-   Then we go to System \ Date and Time and enable NTP service after specifying the timezone.
+> NOTE: Don't forget to SAVE the changes and then APPLY de configuration in the menu that appears. Otherwise changes will be lost.
 
 - To make it easier to power down the system, go to System \ Power button, and change it to "Shutdown" so that we can power down the NAS without any monitor and keyboard.
 
 ![Power button](/images/power-button.png)
+
+### Enable flashmemory plugin
+
+Enable the openmediavault-flashmemory plugin. This lowers the amount of writes to the USB flash drive, making sure you can enjoy it for a long time.
+
 
 ### Backing up USB
 
