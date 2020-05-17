@@ -652,12 +652,55 @@ Finish!
 
 One of the great things of OMV is that it has a full fledged Debian, and that allows us to install any software and directly connect any drive in a readable format.
 
-As I needed to migrate data  onto the NAS, I though that the fastest and most reliable way of doing it, was to directly connect the drive containing the original data on to the motherboard, rather than using an USB drive or the network. We power down the NAS, connect the drive with the data, and power it back again.
+As I needed to migrate data  onto the NAS, I though that the fastest and most reliable way of doing it, was to directly connect the drive containing the original data on to the motherboard, rather than using an USB drive or the network.
+
+We power down the NAS, connect the drive with the data, and power it back again.
 
 We can easily detect the added drive, as it's the one that has not S.M.A.R.T. enabled:
 
-![SMART: Connected drive](/images/smart_2.png)
+![MIGRATION: Connected drive](/images/migration_1.png)
 
+Then we move to mount the filesystem from _Storage \ File Systems_:
+
+![MIGRATION: Mount drive](/images/migration_2.png)
+
+Once mounted we see the data occupied in the filesystem:
+
+![MIGRATION: Drive mounted](/images/migration_3.png)
+
+Now we connect using ssh, and install Midnight Commander (`mc`) from the command line:
+
+> NOTE: We could also use cp, rsync or even a plugin to copy files from an internet browser.
+
+```shell
+apt-get install mc
+```
+
+The mounted partitions can be easily accessed from /srv/ folder:
+
+```shell
+root@mediavault:~# cd /srv
+
+root@mediavault:/srv# ls -alF
+total 32
+drwxr-xr-x  8 root  root    4096 May 17 08:20 ./
+drwxrwxr-x 20 root  root    4096 May  6 03:31 ../
+drwx------  8 vault users   4096 May  1 11:17 dev-disk-by-label-NAS_8TB/
+drwxr-xr-x  4 root  root    4096 May  4 21:43 dev-disk-by-label-r1small/
+drwxr-xr-x  8 root  root    4096 May 17 11:07 dev-disk-by-label-r6big/
+```
+
+I used `mc` to copy the files from the source drive containing the data, to the destination RAID protected share in the NAS:
+
+![MIGRATION: Data migration](/images/migration_4.png)
+
+Once finished,  we can check that both mounted filesystems contain the same amount of data:
+
+![MIGRATION: Size comparison](/images/migration_5.png)
+
+We go back to _Storage \ File Systems_ and unmount the source data filesystem. Then power down the NAS, and remove the drive.
+
+Data migration done!
 
 ## 7. Converting RAID5 to RAID6
 
