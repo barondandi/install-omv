@@ -704,132 +704,143 @@ Data migration done!
 
 ## 7. Converting RAID5 to RAID6
 
-Log in to your system and launch a local shell prompt.
+RAID6 is the new industry standard for storage arrays that are comprised of high capacity disks. An array that is built as RAID6 can support the failure of 2 devices without data loss. That fault tolerance level increases the probability of a successful rebuild in the event of a lost volume.
 
-Change your shell to run as root.
-user@debian~$: su -
-Password:
-root@debian~$:
+> RAID 6 requires a minimum of 4 disks, and I had to use one of the 4 big drives I bought to hold the older NAS data and transition to the new one. Thus, I started with a 3 drives RAID 5 protected group. Then I migrated the data from the source drive onto the RAID 5 and liberated the 4th drive. Last, I converted the RAID 5 group onto a RAID 6 protection, by using this drive and the following procedure.
 
-Review the current status of the array.
-root@debian:~# cat /proc/mdstat
-Personalities : [raid6] [raid5] [raid4]
-md0 : active raid5 sdb[0] sdg[5] sdf[4] sde[2] sdc[1]
-11721060352 blocks super 1.2 level 5, 512k chunk, algorithm 2 [5/5] [UUUUU]
+Log in to your system using ssh with root account.
 
-unused devices: <none>
-The array volume md0 has 5 disks, all are active, it is RAID5, and no unused devices.
+Review the current status of the array with `cat /proc/mdstat`:
 
-Review the detailed information of the array.
-root@debian:~# mdadm --detail /dev/md0
-/dev/md0:
-Raid Level : raid5
-Array Size : 11721060352 (11178.07 GiB 12002.37 GB)
-Raid Devices : 5
-Total Devices : 5
-State : clean
-Number  Major  Minor  RaidDevice State
-       0       8       16              0              active sync       /dev/sdb
-       1       8       32              1              active sync       /dev/sdc
-       2       8       64              2              active sync       /dev/sde
-       4       8       80              3              active sync       /dev/sdf
-       5       8       96              4              active sync       /dev/sdg
-Note that some data was removed for clarity.
-
-Each disk has 3TB capacity for 12TB total capacity in the RAID5 array. The array appears to be clean and fully functional.
-
-Add an additional disk to the RAID5 array.
-root@debian:~# mdadm --add /dev/md0 /dev/sda
-mdadm: added /dev/sda
-Here mdadm is called, told it will be adding a disk, the target is the /dev/md0 array, and the disk is /dev/sda.
-
-Verify the disk is available to the array.
-root@debian:~# mdadm --detail /dev/md0
-/dev/md0:
-Raid Level : raid5
-Array Size : 11721060352 (11178.07 GiB 12002.37 GB)
-Raid Devices : 5
-Total Devices : 6
-State : clean
-Number  Major  Minor  RaidDevice State
-       0       8       16              0              active sync       /dev/sdb
-       1       8       32              1              active sync       /dev/sdc
-       2       8       64              2              active sync       /dev/sde
-       4       8       80              3              active sync       /dev/sdf
-       5       8       96              4              active sync       /dev/sdg
-
-       6       8       0              -              spare       /dev/sda
-The disk /dev/sda is available to the array md0 and listed as a spare. The total number of devices is increased to 6 while the total RAID devices is still 5 and total capcity has remained the same.
-
-Configure the RAID5 array to be a RAID6.
-root@debian:~# mdadm --grow /dev/md0 --level=6 --raid-devices=6 --backup-file=/root/raid5backup
-
-mdadm level of /dev/md0 changed to raid6
-This calls mdadm, tells it to grow the array, the target is /dev/md0, the new RAID level is 6, the total devices is 6, and to backup the array configuration to /root/raid5backup.
-
-The grow command is used because the total number of data disks is increasing from 5 to 6.
-
-6 as the number of devices is just a coincidence. 6 disks are not required for RAID6, the minimum number is 4.
-
-Check the status of the array.
-root@debian:~# cat /proc/mdstat
-Personalities : [raid6] [raid5] [raid4]
-md0 : active raid6 sda[6] sdb[0] sdg[5] sdf[4] sde[2] sdc[1]
-11721060352 blocks super 1.2 level 6, 512k chunk, algorithm 18 [6/5] [UUUUU_]
-[>....................] reshape = 0.0% (38912/2930265088) finish=11290.9min speed=4323K/sec
+```shell
+root@mediavault:/srv# cat /proc/mdstat
+Personalities : [raid1] [raid6] [raid5] [raid4] [linear] [multipath] [raid0] [raid10]
+md127 : active raid5 sdb[1] sda[0] sdc[2]
+      15627788288 blocks super 1.2 level 5, 512k chunk, algorithm 2 [3/3] [UUU]
+      bitmap: 0/59 pages [0KB], 65536KB chunk
 
 unused devices: <none>
+```
 
+> NOTE: In this, and the following outputs, some data was removed for clarity.
 
-root@debian:~# mdadm --detail /dev/md0
-/dev/md0:
-Raid Level : raid6
-Array Size : 11721060352 (11178.07 GiB 12002.37 GB)
-Used Dev Size : 2930265088 (2794.52 GiB 3000.59 GB)
-Raid Devices : 6
-Total Devices : 6
-State : clean, degraded, recovering
-Active Devices : 5
-Working Devices : 6
-Spare Devices : 1
+The array volume `md127` has 3 disks, all are active, it is RAID5, and no unused devices.
 
-Reshape Status : 0% complete
-Number  Major  Minor  RaidDevice State
-       0       8       16              0              active sync       /dev/sdb
-       1       8       32              1              active sync       /dev/sdc
-       2       8       64              2              active sync       /dev/sde
-       4       8       80              3              active sync       /dev/sdf
-       5       8       96              4              active sync       /dev/sdg
-       6       8       0              5              spare rebuilding       /dev/sda
-The array is rebuilding to a RAID6 level array. Notice that the number of RAID devices is now 6, RAID level is 6. It also gives an estimation of the completion time (around 7 days).
+Review the detailed information of the array (`mdadm --detail /dev/mdx`):
+
+```shell
+root@mediavault:/srv# mdadm --detail /dev/md127
+/dev/md127:
+        Raid Level : raid5
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 3
+     Total Devices : 3
+             State : clean
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+
+```
+
+Each disk has 8TB capacity for 16TB total capacity in the RAID5 array. The array appears to be clean and fully functional.
+
+Beforehand, we have added the hard disk `/dev/sdd`, and booted the system.
+
+As this drive was already partitioned and contained data, the first thing we will do now is to create the exact same partitioning as on `/dev/sda` (or `/dev/sdb` or `/dev/sdc`). We can clone the RAID partition table to the new drive `/dev/sdd` with `sgdisk`:
+
+```shell
+sgdisk -R=/dev/sdd /dev/sda
+sgdisk -G /dev/sdd
+```
+
+> You can run `fdisk -l` to check if all hard drives have the same partitioning now.
+
+Add an additional disk to the RAID5 array (`mdadm --add /dev/mdx /dev/sdy`):
+
+```shell
+root@mediavault:/srv# mdadm --add /dev/md127 /dev/sdd
+mdadm: added /dev/sdd
+```
+
+Here `mdadm` is called, told it will be adding a disk, the target is the `/dev/md127` array, and the disk is `/dev/sdd`.
+
+Verify the disk is available to the array (`mdadm --detail /dev/mdx`):
+
+```shell
+root@mediavault:/srv# mdadm --detail /dev/md127
+/dev/md127:
+        Raid Level : raid5
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 3
+     Total Devices : 4
+             State : clean
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+
+       3       8       48        -      spare   /dev/sdd
+```
+
+The disk `/dev/sdd` is available to the array `md127` and listed as a spare. The total number of devices is increased to 6 while the total RAID devices is still 5 and total capcity has remained the same.
+
+Configure the RAID5 array to be a RAID6 (`mdadm --grow /dev/mdx --level=6 --raid-devices=4 --backup-file=/root/raid5backup`):
+
+```shell
+root@mediavault:/srv# mdadm --grow /dev/md127 --level=6 --raid-devices=4 --backup-file=/root/raid5backup
+mdadm: level of /dev/md127 changed to raid6
+```
+
+This calls `mdadm`, tells it to grow the array, the target is `/dev/md127`, the new RAID level is 6, the total devices is 4, and to backup the array configuration to `/root/raid5backup`:
+
+-   The grow command is used because the total number of data disks is increasing from 5 to 6.
+-   4 as the number of devices is the minimum required for RAID6.
+
+Check the status of the array  (`cat /proc/mdstat`):
+
+```shell
+root@mediavault:/srv# cat /proc/mdstat
+Personalities : [raid1] [raid6] [raid5] [raid4] [linear] [multipath] [raid0] [raid10]
+md127 : active raid6 sdd[3] sdb[1] sda[0] sdc[2]
+      15627788288 blocks super 1.2 level 6, 512k chunk, algorithm 18 [4/3] [UUU_]
+      [>....................]  reshape =  0.0% (1515520/7813894144) finish=18633.4min speed=6987K/sec
+      bitmap: 0/59 pages [0KB], 65536KB chunk
+unused devices: <none>
+
+root@mediavault:/srv# mdadm --detail /dev/md127
+/dev/md127:
+        Raid Level : raid6
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 4
+     Total Devices : 4
+             State : clean, degraded, reshaping
+    Active Devices : 3
+   Working Devices : 4
+    Failed Devices : 0
+     Spare Devices : 1
+    Reshape Status : 0% complete
+        New Layout : left-symmetric
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+       3       8       48        3      spare rebuilding   /dev/sdd
+
+```
+
+The array is rebuilding to a RAID6 level array. Notice that the number of RAID devices is now 4, RAID level is 6. It also gives an estimation of the completion time (around 13 days -18633 minutes-).
 
 The next step is to wait until the rebuild is complete.
 
 Verify the status of the array.
-root@textbox:~# cat /proc/mdstat
-Personalities : [raid6] [raid5] [raid4]
-md0 : active raid6 sda[6] sdb[0] sdg[5] sdf[4] sde[2] sdc[1]
-11721060352 blocks super 1.2 level 6, 512k chunk, algorithm 2 [6/6] [UUUUUU]
-unused devices: <none>
 
+```shell
+root@mediavault:/srv# cat /proc/mdstat
 
-root@textbox:~# mdadm --detail /dev/md0
-/dev/md0:
-Raid Level : raid6
-Array Size : 11721060352 (11178.07 GiB 12002.37 GB)
-Used Dev Size : 2930265088 (2794.52 GiB 3000.59 GB)
-Raid Devices : 6
-Total Devices : 6
-State : clean
-Active Devices : 6
-Working Devices : 6
-Number  Major  Minor  RaidDevice State
-       0       8       16              0              active sync       /dev/sdb
-       1       8       32              1              active sync       /dev/sdc
-       2       8       64              2              active sync       /dev/sde
-       4       8       80              3              active sync       /dev/sdf
-       5       8       96              4              active sync       /dev/sdg
-       6       8       0              5              active sync       /dev/sda
+root@mediavault:/srv# mdadm --detail /dev/md127
+```
+
 Array is clean and rebuilt.
 
 ## 8. References and Credits
