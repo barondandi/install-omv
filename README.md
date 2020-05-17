@@ -222,16 +222,39 @@ Fstab (/etc/fstab) needs to be changed manually. Following these steps to change
 
 We power down the NAS, connect the hard disk drives, and restart the system.
 
-Fist we **enable S.M.A.R.T.** over the added drives. Thus we can check when is likely that one of the drives fails. We can do that from Storage \ S.M.A.R.T. (not supported for the USB flash drive). First we enable it on the "Settings" tab, and after on the individual drives on the "Devices" tab:
+Fist we **enable S.M.A.R.T.** over the added drives. Thus we can check when is likely that one of the drives fails. We can do that from _Storage \ S.M.A.R.T._ (not supported for the USB flash drive). First we enable it on the _Settings_ tab, and after on the individual drives on the _Devices_ tab:
+
 ![SMART: Devices](/images/smart_1.png)
 
-We configure the RAID protection we desire in Storage \ RAID Management:
+We configure the RAID protection we desire in _Storage \ RAID Management_:
+
 ![RAID: Created](/images/raid_1.png)
 
-Then we create and mount the filesystems over the created RAID devices from Storage \ File Systems:
+Then we create and mount the filesystems over the created RAID devices from _Storage \ File Systems_:
+
 ![FILESYSTEM: Created](/images/filesystem_1.png)
 
-We create a user
+We create a user for accessing the shares in _Access Rights Management \ User_. By default it belongs to users group.
+
+![USER: Created](/images/user_1.png)
+
+Now we proceed to create the shared folders for the different protocols. I will use NFS to write content, and also use CIFS (Windows) to share in read -only mode.
+
+I will start activating NFS from _Services \ NFS \ Settings_. Then we move to the _Shares_ tab, and from there we create the different exports. We press Add button, and from the menu that appears, first we need to _Add shared folder_:
+
+![NFS: Add shared folder](/images/nfs_1.png)
+
+Then we to to fill the rest of the fields in _Add share_:
+
+![NFS: Add share](/images/nfs_2.png)
+
+![NFS: Created](/images/nfs_3.png)
+
+![NFS: Created](/images/cifs_1.png)
+
+![NFS: Created](/images/cifs_2.png)
+
+
 
 ### Backing up USB
 
