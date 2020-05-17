@@ -109,7 +109,7 @@ If you get a "_No root file system_" error when partitioning the disks, there ar
 
 You might get installation giving an error after some percentage during the "Installing the system..." phase. In my case it was due to an USB drive without enough sustained write speed.
 
-> I had to update to a faster one. You can check USB drives speed tests here: https://usb.userbenchmark.com/. Also, make sure you are connecting it to an USB 3.x connector on the motherboard.
+> I had to update to a faster one. You can check USB drives speed tests here: [https://usb.userbenchmark.com/](https://usb.userbenchmark.com/). Also, make sure you are connecting it to an USB 3.x connector on the motherboard.
 
 ## 3. USB Flash Drive installation
 
@@ -358,13 +358,13 @@ sudo dd if=/dev/sdb of=Downloads/YYYY-MM-DD_omv.img conv=fdatasync bs=4M status=
 ```
 
 Where the explanation of the different parameters follow:
-- **sudo**: You need to be a superuser to issue dd commands. You will be prompted for your password.
-- **dd**: The name of the command we’re using.
-- **bs=4M**: The -bs (blocksize) option defines the size of each chunk that is read from the input file and wrote to the output device. 4 MB is a good choice because it gives decent throughput and it is an exact multiple of 4 KB, which is the blocksize of the ext4 filesystem. This gives an efficient read and write rate.
-- **if=/dev/sdb**: The -if (input file) option requires the path and name of the USB drive you are using as the input file. This is the value we identified by using the lsblk command previously. in our example it is sdb, so we are using /dev/sdb. Your USB drive might have a different identifier. Make sure you provide the correct identifier.
-- **of=Downloads/YYYY-MM-DD_omv.img**: The -of (output file) is the path and name of the file you are using as the output file. In our case we are placing the clone in a file named "YYYY-MM-DD_omv.img" on the Download folder.
-- **conv=fdatasync**: The conv parameter dictates how dd converts the input file as it is written to the output device. dd uses kernel disk caching when it writes to the USB drive. The fdatasync modifier ensure the write buffers are flushed correctly and completely before the creation process is flagged as having finished. This parameter is not relevant when doing the backups, but it is very important for the restoration processes
-- **status=progress**: To see progress while making an image with dd.
+-   **sudo**: You need to be a superuser to issue dd commands. You will be prompted for your password.
+-   **dd**: The name of the command we’re using.
+-   **bs=4M**: The -bs (blocksize) option defines the size of each chunk that is read from the input file and wrote to the output device. 4 MB is a good choice because it gives decent throughput and it is an exact multiple of 4 KB, which is the blocksize of the ext4 filesystem. This gives an efficient read and write rate.
+-   **if=/dev/sdb**: The -if (input file) option requires the path and name of the USB drive you are using as the input file. This is the value we identified by using the lsblk command previously. in our example it is sdb, so we are using /dev/sdb. Your USB drive might have a different identifier. Make sure you provide the correct identifier.
+-   **of=Downloads/YYYY-MM-DD_omv.img**: The -of (output file) is the path and name of the file you are using as the output file. In our case we are placing the clone in a file named "YYYY-MM-DD_omv.img" on the Download folder.
+-   **conv=fdatasync**: The conv parameter dictates how dd converts the input file as it is written to the output device. dd uses kernel disk caching when it writes to the USB drive. The fdatasync modifier ensure the write buffers are flushed correctly and completely before the creation process is flagged as having finished. This parameter is not relevant when doing the backups, but it is very important for the restoration processes
+-   **status=progress**: To see progress while making an image with dd.
 
 > NOTE: If you get read errors, you can use the parameter `conv=noerror` to tell `dd` to continue operation, ignoring all read errors. Or even better, install and use `ddrescue` instead of `dd`.
 
@@ -419,8 +419,7 @@ You can check the bootable USB drive works by rebooting your computer and bootin
 
 ## 4. RAID installation using an USB flash drive
 
-
-First install OMV on a USB drive, and boot for the first time. Shut down OMV and insert two drives you actually intend on using, and boot OMV from USB device.
+First install OMV on a USB drive, as previously described, and boot for the first time. Do not enable flashmemory plugin. Shut down OMV and insert two drives you actually intend on using, and boot OMV from USB device.
 
  Now that you are logged in via SSH you need to determine your drives, I use lsscsi for that, but you can use whatever you want. In my demonstration I have OMV installed on /dev/sda, while /dev/sdb and /dev/sdc are SATA drives.
 
