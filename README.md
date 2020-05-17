@@ -248,13 +248,67 @@ Then we to to fill the rest of the fields in _Add share_:
 
 ![NFS: Add share](/images/nfs_2.png)
 
-![NFS: Created](/images/nfs_3.png)
+We repeat the process for all the exports we want to create:
 
-![NFS: Created](/images/cifs_1.png)
+![NFS: Shares](/images/nfs_3.png)
 
-![NFS: Created](/images/cifs_2.png)
+Once we are finished we move to _Services \ SMB/CIFS \ Settings_ in order to activate CIFs. There we can enable the service and change the default Workgroup among other things. Then we move to the _Shares_ tab, and from there we add the different shares. We press Add button, and from the menu that appears, first we no longer need need to _Add shared folder_, as we already did it for the NFS protocol. I mark that I want the shares to be read-only:
 
+![CIFS: Add share](/images/cifs_1.png)
 
+We repeat the process for all the shares we want to create:
+
+![CIFS: Created](/images/cifs_2.png)
+
+Now we move back to _Access Rights Management \ User_ and click on the _Privileges_ button for the user we created. If we want the access user we created to be able to write into the shares we created, we need to specify it here:
+
+![USER: Privileges](/images/user_2.png)
+
+With this we are done and we should be able to access the created shares. I will test it in a Linux host, where I hae created the _\mnt\MediaVault_ folder. I will mount over this folder the root share to check the contents. I can do that by using the command:
+
+```shell
+sudo mount -t nfs -v -o proto=tcp <omv_ip>:/ <folder_to_mount>
+```
+
+In my case this is the output (I also wrote a test file and unmounted the export afterwards):
+
+```shell
+[user@fedora ~]$ sudo mount -t nfs -v -o proto=tcp 192.168.1.2:/ /mnt/MediaVault
+[sudo] password for user:
+mount.nfs: timeout set for Sun May 17 12:06:13 2020
+mount.nfs: trying text-based options 'proto=tcp,vers=4.2,addr=192.168.1.2,clientaddr=192.168.1.101'
+
+[user@fedora ~]$ cd /mnt/MediaVault/
+
+[user@fedora MediaVault]$ ls -alF
+total 28
+drwxr-xr-x. 7 root root  4096 May 17 00:53 ./
+drwxr-xr-x. 4 root root  4096 Jul 25  2019 ../
+drwxrwsr-x. 4 root users 4096 May  4 23:42 BackUp/
+drwxrwsr-x. 7 root users 4096 May 17 10:37 GAMEs/
+drwxrwsr-x. 2 root users 4096 May  5 23:33 MOVIEs_HD/
+drwxrwsr-x. 2 root users 4096 May  5 23:35 MOVIEs_Series/
+drwxrwsr-x. 2 root users 4096 May  5 23:36 MUSIC_HD/
+
+[user@fedora MediaVault]$ cd BackUp/
+
+[user@fedora BackUp]$ echo "Write test" > test.txt
+
+[user@fedora BackUp]$ ls -ahlF
+total 20K
+drwxrwsr-x. 4 root    users 4.0K May 17 12:06 ./
+drwxr-xr-x. 7 root    root  4.0K May 17 00:53 ../
+-rw-rw-r--. 1 user users   11 May 17 12:06 test.txt
+
+[user@fedora BackUp]$ sync
+
+[user@fedora BackUp]$ cd
+
+[user@fedora ~]$ sudo umount /mnt/MediaVault
+
+```
+
+Now we are ready to start rocking... :)
 
 ### Backing up USB
 
