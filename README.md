@@ -22,8 +22,10 @@ I will be using version 5.x and only specifying here the steps which are not ref
     -   [Backing up USB](#Backing-up-USB)
 4.  [RAID installation using an USB flash drive](#4.-RAID-installation-using-an-USB-flash-drive)
 5.  [RAID installation using only hard drives](#5.-RAID-installation-using-only-hard-drives)
-6.  [References and Credits](#6.-references-and-credits)
-7.  [Summary](#7.-summary)
+6.  [Data migration](#6.-Data-migration)
+7.  [Converting RAID5 to RAID6](#7.-Converting-RAID5-to-RAID6)
+8.  [References and Credits](#8.-references-and-credits)
+9.  [Summary](#9.-summary)
 
 I already went through several NAS builds over the years. From a tailored made FreeBSD kernel to spin FreeNAS, openfiler, Ubuntu Server or a QNAP system.
 
@@ -646,13 +648,154 @@ Finish!
 
 > NOTE: **Be careful to not use “sfdisk” command to recover partition table from the healthy disk**, sfdisk does not support GPT. **Use “sgdisk” instead**. If new disk is /dev/sdb and healthy disk is /dev/sda, then do: `sgdisk -R=/dev/sdb /dev/sda` to replicate partition table from sda to sdb. Finally, use OMV GUI to recover RAID mirror.
 
-## 6. References and Credits
+## 6. Data migration
+
+One of the great things of OMV is that it has a full fledged Debian, and that allows us to install any software and directly connect any drive in a readable format.
+
+As I needed to migrate data  onto the NAS, I though that the fastest and most reliable way of doing it, was to directly connect the drive containing the original data on to the motherboard, rather than using an USB drive or the network. We power down the NAS, connect the drive with the data, and power it back again.
+
+We can easily detect the added drive, as it's the one that has not S.M.A.R.T. enabled:
+
+![SMART: Connected drive](/images/smart_2.png)
+
+
+## 7. Converting RAID5 to RAID6
+
+Log in to your system and launch a local shell prompt.
+
+Change your shell to run as root.
+user@debian~$: su -
+Password:
+root@debian~$:
+
+Review the current status of the array.
+root@debian:~# cat /proc/mdstat
+Personalities : [raid6] [raid5] [raid4]
+md0 : active raid5 sdb[0] sdg[5] sdf[4] sde[2] sdc[1]
+11721060352 blocks super 1.2 level 5, 512k chunk, algorithm 2 [5/5] [UUUUU]
+
+unused devices: <none>
+The array volume md0 has 5 disks, all are active, it is RAID5, and no unused devices.
+
+Review the detailed information of the array.
+root@debian:~# mdadm --detail /dev/md0
+/dev/md0:
+Raid Level : raid5
+Array Size : 11721060352 (11178.07 GiB 12002.37 GB)
+Raid Devices : 5
+Total Devices : 5
+State : clean
+Number  Major  Minor  RaidDevice State
+       0       8       16              0              active sync       /dev/sdb
+       1       8       32              1              active sync       /dev/sdc
+       2       8       64              2              active sync       /dev/sde
+       4       8       80              3              active sync       /dev/sdf
+       5       8       96              4              active sync       /dev/sdg
+Note that some data was removed for clarity.
+
+Each disk has 3TB capacity for 12TB total capacity in the RAID5 array. The array appears to be clean and fully functional.
+
+Add an additional disk to the RAID5 array.
+root@debian:~# mdadm --add /dev/md0 /dev/sda
+mdadm: added /dev/sda
+Here mdadm is called, told it will be adding a disk, the target is the /dev/md0 array, and the disk is /dev/sda.
+
+Verify the disk is available to the array.
+root@debian:~# mdadm --detail /dev/md0
+/dev/md0:
+Raid Level : raid5
+Array Size : 11721060352 (11178.07 GiB 12002.37 GB)
+Raid Devices : 5
+Total Devices : 6
+State : clean
+Number  Major  Minor  RaidDevice State
+       0       8       16              0              active sync       /dev/sdb
+       1       8       32              1              active sync       /dev/sdc
+       2       8       64              2              active sync       /dev/sde
+       4       8       80              3              active sync       /dev/sdf
+       5       8       96              4              active sync       /dev/sdg
+
+       6       8       0              -              spare       /dev/sda
+The disk /dev/sda is available to the array md0 and listed as a spare. The total number of devices is increased to 6 while the total RAID devices is still 5 and total capcity has remained the same.
+
+Configure the RAID5 array to be a RAID6.
+root@debian:~# mdadm --grow /dev/md0 --level=6 --raid-devices=6 --backup-file=/root/raid5backup
+
+mdadm level of /dev/md0 changed to raid6
+This calls mdadm, tells it to grow the array, the target is /dev/md0, the new RAID level is 6, the total devices is 6, and to backup the array configuration to /root/raid5backup.
+
+The grow command is used because the total number of data disks is increasing from 5 to 6.
+
+6 as the number of devices is just a coincidence. 6 disks are not required for RAID6, the minimum number is 4.
+
+Check the status of the array.
+root@debian:~# cat /proc/mdstat
+Personalities : [raid6] [raid5] [raid4]
+md0 : active raid6 sda[6] sdb[0] sdg[5] sdf[4] sde[2] sdc[1]
+11721060352 blocks super 1.2 level 6, 512k chunk, algorithm 18 [6/5] [UUUUU_]
+[>....................] reshape = 0.0% (38912/2930265088) finish=11290.9min speed=4323K/sec
+
+unused devices: <none>
+
+
+root@debian:~# mdadm --detail /dev/md0
+/dev/md0:
+Raid Level : raid6
+Array Size : 11721060352 (11178.07 GiB 12002.37 GB)
+Used Dev Size : 2930265088 (2794.52 GiB 3000.59 GB)
+Raid Devices : 6
+Total Devices : 6
+State : clean, degraded, recovering
+Active Devices : 5
+Working Devices : 6
+Spare Devices : 1
+
+Reshape Status : 0% complete
+Number  Major  Minor  RaidDevice State
+       0       8       16              0              active sync       /dev/sdb
+       1       8       32              1              active sync       /dev/sdc
+       2       8       64              2              active sync       /dev/sde
+       4       8       80              3              active sync       /dev/sdf
+       5       8       96              4              active sync       /dev/sdg
+       6       8       0              5              spare rebuilding       /dev/sda
+The array is rebuilding to a RAID6 level array. Notice that the number of RAID devices is now 6, RAID level is 6. It also gives an estimation of the completion time (around 7 days).
+
+The next step is to wait until the rebuild is complete.
+
+Verify the status of the array.
+root@textbox:~# cat /proc/mdstat
+Personalities : [raid6] [raid5] [raid4]
+md0 : active raid6 sda[6] sdb[0] sdg[5] sdf[4] sde[2] sdc[1]
+11721060352 blocks super 1.2 level 6, 512k chunk, algorithm 2 [6/6] [UUUUUU]
+unused devices: <none>
+
+
+root@textbox:~# mdadm --detail /dev/md0
+/dev/md0:
+Raid Level : raid6
+Array Size : 11721060352 (11178.07 GiB 12002.37 GB)
+Used Dev Size : 2930265088 (2794.52 GiB 3000.59 GB)
+Raid Devices : 6
+Total Devices : 6
+State : clean
+Active Devices : 6
+Working Devices : 6
+Number  Major  Minor  RaidDevice State
+       0       8       16              0              active sync       /dev/sdb
+       1       8       32              1              active sync       /dev/sdc
+       2       8       64              2              active sync       /dev/sde
+       4       8       80              3              active sync       /dev/sdf
+       5       8       96              4              active sync       /dev/sdg
+       6       8       0              5              active sync       /dev/sda
+Array is clean and rebuilt.
+
+## 8. References and Credits
 
 This document is based on the following resources. I really thank the authors for sharing their knowledge and trouble:
 -   OpenMediaVault installation procedure - [https://openmediavault.readthedocs.io/en/5.x/installation/index.html](https://openmediavault.readthedocs.io/en/5.x/installation/index.html).
 -   Installing OpenMediaVault on RAID-1 array - [https://lazic.info/josip/post/installing-openmediavault-on-raid-device/](https://lazic.info/josip/post/installing-openmediavault-on-raid-device/)
 -   Converting RAID5 to RAID6 in mdadm - [http://ewams.net/?date=2013/05/02&view=Converting_RAID5_to_RAID6_in_mdadm](http://ewams.net/?date=2013/05/02&view=Converting_RAID5_to_RAID6_in_mdadm)
 
-## 7. Summary
+## 9. Summary
 
 -   _**Objetive:**_ Cover OpenMediaVault unsupported and not recommended installation procedures, and hopefully save you some time!
