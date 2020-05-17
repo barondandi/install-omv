@@ -1,4 +1,4 @@
-procedure# install-omv
+# install-omv
 OpenMediaVault Installation (Including unsupported and not recommended)
 
 > Procedures to do an OpenMediaVault installation including procedures both unsupported (on a RAID protected filesystem and sharing OS space with data) and not recommended (using and USB flash drive).
@@ -521,15 +521,20 @@ And this is it, login to web interface, mount /dev/md1 and start using OMV insta
 
 ## 5. RAID installation using only hard drives
 
-> Later, in the same guide, Igor Novikoff, 
+> Later, in the same guide, Igor Novikoff, tailors the previous procedure to avoid the installation on a USB drive first. He directly installs it on one of the hard drives meant to be part of the RAID group, creates the RAID specifying that a device is missing, and once the installation is complete, re-purposes the drive and adds it to the RAID group.
 
-I did not need a pendrive. I used 4 x 4GB hard drives each. I installed the system on the first disk, then created a smaller partition on the other 3 disks. Created raid volume. Then I copied (rsync) the systems to the minor partition (raid) and functioned perfectly.
+> NOTE: In his installation the uses 4 drives, so I will try to modify the flow to do it with 2 drives, so that it matches the previous example.
 
-Finally, I deleted Disk 1 and included it in the raid scheme.
+I did not need a pendrive. I used 2 hard drives:
 
-For those who need something similar:
+-   I installed the system on the first disk, then created a smaller partition on the other disk.
+-   Created a RAID volume.
+-   Then I copied (rsync) the systems to the minor partition (raid) and functioned perfectly.
+-   Finally, I deleted Disk 1 and included it in the raid scheme.
 
-Create disk sceme
+For those who need something similar the procedure follows.
+
+Create disk scheme:
 
 ```shell
 parted -a optimal /dev/sdb mklabel gpt
@@ -542,25 +547,26 @@ parted -a optimal /dev/sdb set 1 bios_grub on
 parted -a optimal /dev/sdb set 2 boot on
 ```
 
-Copy to other discs (don’t copy to actualy system disc)
+In case you had more than 2 disks on the RAID, you would need to copy this partition table to the other discs that will be part of the RAID (except for the current system disc).
+
+> NOTE: In this example you need to replace /dev/sdx for the drives identifier
 
 ```shell
-sgdisk -R=/dev/sdc /dev/sdb
-sgdisk -G /dev/sdc
+sgdisk -R=/dev/sdx /dev/sdb
+sgdisk -G /dev/sdx
 
-sgdisk -R=/dev/sdd /dev/sdb
-sgdisk -G /dev/sdd
 ```
 
-Create the raid w/ 4 discs (frist disc is not in the raid in this moment)
-We create only 2 raids in this moment. Swap area and System area
+Create the raid with 2 discs (first disc is not in the RAID in this moment). At this moment, we create only 2 partition RAIDs: _swap area_ and _system area_.
 
 ```shell
-mdadm –create /dev/md1 –level=10 –raid-devices=4 missing /dev/sdb2 /dev/sdc2 /dev/sdd2
-mdadm –create /dev/md2 –level=1 –raid-devices=4 missing /dev/sdb3 /dev/sdc3 /dev/sdd3
+mdadm –create /dev/md1 –level=1 –raid-devices=2 missing /dev/sdb2
+# mdadm –create /dev/md1 –level=10 –raid-devices=x missing /dev/sdb2 /dev/sdx2 /dev/sdy2
+mdadm –create /dev/md2 –level=1 –raid-devices=2 missing /dev/sdb3
+# mdadm –create /dev/md2 –level=1 –raid-devices=x missing /dev/sdb3 /dev/sdx3 /dev/sdy3
 ```
 
-Create file systems
+Create file systems:
 
 ```shell
 mkswap /dev/md1
@@ -568,7 +574,7 @@ mkfs.ext4 /dev/md2
 mkfs.ext4 -m 1 -L DATA /dev/md3
 ```
 
-Mount and copy system
+Mount and copy system:
 
 ```shell
 mkdir /mnt/root
@@ -576,19 +582,19 @@ mount /dev/md2 /mnt/root/
 rsync -avx / /mnt/root
 ```
 
-update the raid config file
+Update the raid config file:
 
 ```shell
 mdadm –detail –scan >> /mnt/root/etc/mdadm/mdadm.conf
 ```
 
-Find the UUID of md2 and update /mnt/root/etc/fstab
+Find the UUID of md2 and update /mnt/root/etc/fstab:
 
 ```shell
 blkid
 ```
 
-Mount system
+Mount system:
 
 ```shell
 mount –bind /dev /mnt/root/dev
@@ -597,39 +603,36 @@ mount –bind /proc /mnt/root/proc
 chroot /mnt/root/
 ```
 
-Update grub
+Update grub:
 
 ```shell
 grub-install –recheck /dev/sdb
-grub-install –recheck /dev/sdc
-grub-install –recheck /dev/sdd
+# grub-install –recheck /dev/sdx
 grub-mkconfig -o /boot/grub/grub.cfg
 update-initramfs -u
 ```
 
-Ok, your system are OK. Reboot OMV.
-
-
-When system up, copy the partition schema to the frist disc (system disc)
+The system partition in the RAID group is now OK. Reboot OMV. When the system is up, copy the partition schema to the first disc (previous system disc):
 
 ```shell
 sgdisk -R=/dev/sda /dev/sdb
 sgdisk -G /dev/sda
 ```
 
-Add this disc to raid
+Add this disc to RAID group:
 
 ```shell
 mdadm /dev/md2 –add /dev/sda3
 ```
 
-Create the raid for the DATA
+Create the RAID group for the DATA partition:
 
 ```shell
-mdadm –create /dev/md3 –level=10 –raid-devices=4 /dev/sda4 /dev/sdb4 /dev/sdc4 /dev/sdd4
+mdadm –create /dev/md3 –level=1 –raid-devices=2 /dev/sda4 /dev/sdb4
+# mdadm –create /dev/md3 –level=10 –raid-devices=x /dev/sda4 /dev/sdb4 /dev/sdx4 /dev/sdy4
 ```
 
-Ok, finaly, update the grub on frist disc
+Ok, finaly, update the grub on first disc:
 
 ```shell
 grub-install –recheck /dev/sda
@@ -639,12 +642,7 @@ update-initramfs -u
 
 Finish!
 
-> Be careful to not use “sfdisk” command to recover partition table from the healthy disk, sfdisk does not support GPT.
-Use “sgdisk” instead.
-If new disk is /dev/sdb and healthy disk is /dev/sda, then do
-> ```shell sgdisk -R=/dev/sdb /dev/sda ```
-> to replicate partition table from sda to sdb.
-Finally, use OMV GUI to recover RAID mirror.
+> NOTE: **Be careful to not use “sfdisk” command to recover partition table from the healthy disk**, sfdisk does not support GPT. **Use “sgdisk” instead**. If new disk is /dev/sdb and healthy disk is /dev/sda, then do: `sgdisk -R=/dev/sdb /dev/sda` to replicate partition table from sda to sdb. Finally, use OMV GUI to recover RAID mirror.
 
 ## 6. References and Credits
 
