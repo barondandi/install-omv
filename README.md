@@ -645,9 +645,9 @@ Finish!
 ## 6. References and Credits
 
 This document is based on the following resources. I really thank the authors for sharing their knowledge and trouble:
-
-- Installing OpenMediaVault on RAID-1 array - https://lazic.info/josip/post/installing-openmediavault-on-raid-device/
-
+-   OpenMediaVault installation procedure - [https://openmediavault.readthedocs.io/en/5.x/installation/index.html](https://openmediavault.readthedocs.io/en/5.x/installation/index.html).
+-   Installing OpenMediaVault on RAID-1 array - https://lazic.info/josip/post/installing-openmediavault-on-raid-device/
+-   Converting RAID5 to RAID6 in mdadm - [http://ewams.net/?date=2013/05/02&view=Converting_RAID5_to_RAID6_in_mdadm](http://ewams.net/?date=2013/05/02&view=Converting_RAID5_to_RAID6_in_mdadm)
 
 ## 7. Summary
 
