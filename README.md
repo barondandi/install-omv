@@ -228,6 +228,10 @@ We configure the RAID protection we desire in _Storage \ RAID Management_:
 
 ![RAID: Created](/images/raid_1.png)
 
+Be aware that depending on the dives speed and size, the process could take several hours (for example, building a RAID 5 group with 8 TB drives, took me close to 23 hours):
+
+![RAID: Build time](/images/raid_2.jpg)
+
 Then we create and mount the filesystems over the created RAID devices from _Storage \ File Systems_:
 
 ![FILESYSTEM: Created](/images/filesystem_1.png)
@@ -651,4 +655,4 @@ This document is based on the following resources. I really thank the authors fo
 
 ## 7. Summary
 
--   __**Objetive:**__ Cover OpenMediaVault unsupported and not recommended installation procedures, and hopefully save you some time!
+-   _**Objetive:**_ Cover OpenMediaVault unsupported and not recommended installation procedures, and hopefully save you some time!
