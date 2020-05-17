@@ -1,4 +1,4 @@
-# install-omv
+procedure# install-omv
 OpenMediaVault Installation (Including unsupported and not recommended)
 
 > Procedures to do an OpenMediaVault installation including procedures both unsupported (on a RAID protected filesystem and sharing OS space with data) and not recommended (using and USB flash drive).
@@ -419,9 +419,11 @@ You can check the bootable USB drive works by rebooting your computer and bootin
 
 ## 4. RAID installation using an USB flash drive
 
+> NOTE: I describe here Josip Lazić procedure (link in References at the end), just adding some comments. I did not follow this porcedure as I went for the USB installation in the end (for the reasons already given).
+
 First install OMV on a USB drive, as previously described, and boot for the first time. Do not enable flashmemory plugin. Shut down OMV and insert two drives you actually intend on using, and boot OMV from USB device.
 
- Now that you are logged in via SSH you need to determine your drives, I use lsscsi for that, but you can use whatever you want. In my demonstration I have OMV installed on /dev/sda, while /dev/sdb and /dev/sdc are SATA drives.
+ Now that you are logged in via SSH you need to determine your drives, I use `lsscsi` for that, but you can use whatever you want. In my demonstration I have OMV installed on `/dev/sda`, while `/dev/sdb` and `/dev/sdc` are SATA drives.
 
 First we need to create partitions on SATA drives, I will use parted for creating 3 partitions, first for GRUB, second for OMV root, and third for data.
 
@@ -436,6 +438,7 @@ parted -a optimal /dev/sdb set 2 boot on
 
 You can change sizes of partitions, I’m using 4G for OMV root partition, in my case that is enough you can change it to better suit your needs. You should end up with something like this:
 
+```shell
 root@openmediavault:~# parted /dev/sdb u s p
 Model: ATA VBOX HARDDISK (scsi)
 Disk /dev/sdb: 83886080s
@@ -446,54 +449,79 @@ Number Start End Size File system Name Flags
 1 2048s 22527s 20480s grub bios_grub
 2 22528s 7999487s 7976960s ext4 root boot
 3 7999488s 83884031s 75884544s ext4 data
+```
+
+> NOTE: I would recommend reproducing the partition sizes that you have on the USB drive. The space reserved for GRUB is 512M (instead of 12M) and the filesystem type vfat. If you plan to install Docker or other software, you might want to increase the size of the OMV root partition to 8GB. And finally you might also want to add the swap partition of the size of your memory (or the one that you expect to have if expanding it is in the horizon). As in the example, place the data partition at the end, and make it size to fill !00% of the remaining space.
 
 Now we clone this partition table to second drive /dev/sdc with sgdisk:
 
+```shell
 sgdisk -R=/dev/sdc /dev/sdb
 sgdisk -G /dev/sdc
+```
 
 Now that we have two drives with identical partition setup we can create mdadm RAID arrays on those partitions. First array will be for OMV root drive on /dev/sd(b|c)2 partitions and other array on /dev/sd(b|c)3 partitions.
 
+```shell
 mdadm --create /dev/md0 --level=1 --raid-devices=2 --metadata=0.90 /dev/sdb2 /dev/sdc2
 mdadm --create /dev/md1 --level=1 --raid-devices=2 --metadata=0.90 /dev/sdb3 /dev/sdc3
+```
 
 Create ext4 filesystem on /dev/md0:
 
+```shell
 mkfs.ext4 /dev/md0
+```
 
 With filesystem on /dev/md0 we can mount it on /mnt/root and sync OMV to /dev/md0.
 
+```shell
 mkdir /mnt/root
 mount /dev/md0 /mnt/root/
 rsync -avx / /mnt/root
+```
 
 One more thing, we must add new arrays to the /mnt/root/etc/mdadm/mdadm.conf, and change UUID of / mountpoint in chrooted OMV instalation. You can add new arrays to mdadm.conf with following command:
 
+```shell
 mdadm --detail --scan >> /mnt/root/etc/mdadm/mdadm.conf
+```
 
 Find UUID of /dev/md0 with blkid command and change UUID for / mount point in /mnt/root/etc/fstab.
 
 Now you are ready to bind mount /dev /sys and /proc to our new root drive and chroot there:
 
+```shell
 mount --bind /dev /mnt/root/dev
 mount --bind /sys /mnt/root/sys
 mount --bind /proc /mnt/root/proc
 chroot /mnt/root/
+```
 
 Congrats, you are now in your OMV installation on RAID array, there is only GRUB setup left to do and you are golden. Install GRUB on both new drives, update grub configuration and update initramfs and that is it.
 
+```shell
 grub-install --recheck /dev/sdb
 grub-install --recheck /dev/sdc
 grub-mkconfig -o /boot/grub/grub.cfg
 update-initramfs -u
+```
 
 Exit chroot with exit and shutdown OMV. Remove USB device and boot into OMV on RAID1 array, once boot is done login as root via SSH and create filesystem on /dev/md1 with
 
+```shell
 mkfs.ext4 -m 1 -L DATA /dev/md1
+```
 
 And this is it, login to web interface, mount /dev/md1 and start using OMV installed on RAID1 array.
 
+![FILESYSTEM: RAID1](/images/filesystem_2.png)
+
+> NOTE: Now, if a drive in RAID1 array fails you can replace it following this guide: [https://www.howtoforge.com/replacing_hard_disks_in_a_raid1_array](https://www.howtoforge.com/replacing_hard_disks_in_a_raid1_array)
+
 ## 5. RAID installation using only hard drives
+
+> Later, in the same guide, Igor Novikoff, 
 
 I did not need a pendrive. I used 4 x 4GB hard drives each. I installed the system on the first disk, then created a smaller partition on the other 3 disks. Created raid volume. Then I copied (rsync) the systems to the minor partition (raid) and functioned perfectly.
 
