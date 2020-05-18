@@ -22,8 +22,11 @@ I will be using version 5.x and only specifying here the steps which are not ref
     -   [Backing up USB](#Backing-up-USB)
 4.  [RAID installation using an USB flash drive](#4.-RAID-installation-using-an-USB-flash-drive)
 5.  [RAID installation using only hard drives](#5.-RAID-installation-using-only-hard-drives)
-6.  [References and Credits](#6.-references-and-credits)
-7.  [Summary](#7.-summary)
+6.  [Data migration](#6.-Data-migration)
+7.  [Converting RAID5 to RAID6](#7.-Converting-RAID5-to-RAID6)
+    -   [Power down during a RAID rebuild](#Power-down-during-a-RAID-rebuild)
+8.  [References and Credits](#8.-references-and-credits)
+9.  [Summary](#9.-summary)
 
 I already went through several NAS builds over the years. From a tailored made FreeBSD kernel to spin FreeNAS, openfiler, Ubuntu Server or a QNAP system.
 
@@ -227,6 +230,10 @@ Fist we **enable S.M.A.R.T.** over the added drives. Thus we can check when is l
 We configure the RAID protection we desire in _Storage \ RAID Management_:
 
 ![RAID: Created](/images/raid_1.png)
+
+Be aware that depending on the dives speed and size, the process could take several hours (for example, building a RAID 5 group with 8 TB drives, took me close to 23 hours):
+
+![RAID: Build time](/images/raid_2.jpg)
 
 Then we create and mount the filesystems over the created RAID devices from _Storage \ File Systems_:
 
@@ -642,13 +649,331 @@ Finish!
 
 > NOTE: **Be careful to not use “sfdisk” command to recover partition table from the healthy disk**, sfdisk does not support GPT. **Use “sgdisk” instead**. If new disk is /dev/sdb and healthy disk is /dev/sda, then do: `sgdisk -R=/dev/sdb /dev/sda` to replicate partition table from sda to sdb. Finally, use OMV GUI to recover RAID mirror.
 
-## 6. References and Credits
+## 6. Data migration
+
+One of the great things of OMV is that it has a full fledged Debian, and that allows us to install any software and directly connect any drive in a readable format.
+
+As I needed to migrate data  onto the NAS, I though that the fastest and most reliable way of doing it, was to directly connect the drive containing the original data on to the motherboard, rather than using an USB drive or the network.
+
+We power down the NAS, connect the drive with the data, and power it back again.
+
+We can easily detect the added drive, as it's the one that has not S.M.A.R.T. enabled:
+
+![MIGRATION: Connected drive](/images/migration_1.png)
+
+Then we move to mount the filesystem from _Storage \ File Systems_:
+
+![MIGRATION: Mount drive](/images/migration_2.png)
+
+Once mounted we see the data occupied in the filesystem:
+
+![MIGRATION: Drive mounted](/images/migration_3.png)
+
+Now we connect using ssh, and install Midnight Commander (`mc`) from the command line:
+
+> NOTE: We could also use cp, rsync or even a plugin to copy files from an internet browser.
+
+```shell
+apt-get install mc
+```
+
+The mounted partitions can be easily accessed from /srv/ folder:
+
+```shell
+root@mediavault:~# cd /srv
+
+root@mediavault:/srv# ls -alF
+total 32
+drwxr-xr-x  8 root  root    4096 May 17 08:20 ./
+drwxrwxr-x 20 root  root    4096 May  6 03:31 ../
+drwx------  8 vault users   4096 May  1 11:17 dev-disk-by-label-NAS_8TB/
+drwxr-xr-x  4 root  root    4096 May  4 21:43 dev-disk-by-label-r1small/
+drwxr-xr-x  8 root  root    4096 May 17 11:07 dev-disk-by-label-r6big/
+```
+
+I used `mc` to copy the files from the source drive containing the data, to the destination RAID protected share in the NAS:
+
+![MIGRATION: Data migration](/images/migration_4.png)
+
+Once finished,  we can check that both mounted filesystems contain the same amount of data:
+
+![MIGRATION: Size comparison](/images/migration_5.png)
+
+We go back to _Storage \ File Systems_ and unmount the source data filesystem. Then power down the NAS, and remove the drive.
+
+Data migration done!
+
+## 7. Converting RAID5 to RAID6
+
+RAID6 is the new industry standard for storage arrays that are comprised of high capacity disks. An array that is built as RAID6 can support the failure of 2 devices without data loss. That fault tolerance level increases the probability of a successful rebuild in the event of a lost volume.
+
+> RAID 6 requires a minimum of 4 disks, and I had to use one of the 4 big drives I bought to hold the older NAS data and transition to the new one. Thus, I started with a 3 drives RAID 5 protected group. Then I migrated the data from the source drive onto the RAID 5 and liberated the 4th drive. Last, I converted the RAID 5 group onto a RAID 6 protection, by using this drive and the following procedure.
+
+Log in to your system using ssh with root account.
+
+Review the current status of the array with `cat /proc/mdstat`:
+
+```shell
+root@mediavault:/srv# cat /proc/mdstat
+Personalities : [raid1] [raid6] [raid5] [raid4] [linear] [multipath] [raid0] [raid10]
+md127 : active raid5 sdb[1] sda[0] sdc[2]
+      15627788288 blocks super 1.2 level 5, 512k chunk, algorithm 2 [3/3] [UUU]
+      bitmap: 0/59 pages [0KB], 65536KB chunk
+
+unused devices: <none>
+```
+
+> NOTE: In this, and the following outputs, some data was removed for clarity.
+
+The array volume `md127` has 3 disks, all are active, it is RAID5, and no unused devices.
+
+Review the detailed information of the array (`mdadm --detail /dev/mdx`):
+
+```shell
+root@mediavault:/srv# mdadm --detail /dev/md127
+/dev/md127:
+        Raid Level : raid5
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 3
+     Total Devices : 3
+             State : clean
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+
+```
+
+Each disk has 8TB capacity for 16TB total capacity in the RAID5 array. The array appears to be clean and fully functional.
+
+Beforehand, we have added the hard disk `/dev/sdd`, and booted the system.
+
+As this drive was already partitioned and contained data, the first thing we will do now is to create the exact same partitioning as on `/dev/sda` (or `/dev/sdb` or `/dev/sdc`). We can clone the RAID partition table to the new drive `/dev/sdd` with `sgdisk`:
+
+```shell
+sgdisk -R=/dev/sdd /dev/sda
+sgdisk -G /dev/sdd
+```
+
+> You can run `fdisk -l` to check if all hard drives have the same partitioning now.
+
+Add an additional disk to the RAID5 array (`mdadm --add /dev/mdx /dev/sdy`):
+
+```shell
+root@mediavault:/srv# mdadm --add /dev/md127 /dev/sdd
+mdadm: added /dev/sdd
+```
+
+Here `mdadm` is called, told it will be adding a disk, the target is the `/dev/md127` array, and the disk is `/dev/sdd`.
+
+Verify the disk is available to the array (`mdadm --detail /dev/mdx`):
+
+```shell
+root@mediavault:/srv# mdadm --detail /dev/md127
+/dev/md127:
+        Raid Level : raid5
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 3
+     Total Devices : 4
+             State : clean
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+
+       3       8       48        -      spare   /dev/sdd
+```
+
+The disk `/dev/sdd` is available to the array `md127` and listed as a spare. The total number of devices is increased to 6 while the total RAID devices is still 5 and total capcity has remained the same.
+
+Configure the RAID5 array to be a RAID6 (`mdadm --grow /dev/mdx --level=6 --raid-devices=4 --backup-file=/root/raid5backup`):
+
+```shell
+root@mediavault:/srv# mdadm --grow /dev/md127 --level=6 --raid-devices=4 --backup-file=/root/raid5backup
+mdadm: level of /dev/md127 changed to raid6
+```
+
+This calls `mdadm`, tells it to grow the array, the target is `/dev/md127`, the new RAID level is 6, the total devices is 4, and to backup the array configuration to `/root/raid5backup`:
+
+-   The grow command is used because the total number of data disks is increasing from 5 to 6.
+-   4 as the number of devices is the minimum required for RAID6.
+
+Check the status of the array  (`cat /proc/mdstat`):
+
+```shell
+root@mediavault:/srv# cat /proc/mdstat
+Personalities : [raid1] [raid6] [raid5] [raid4] [linear] [multipath] [raid0] [raid10]
+md127 : active raid6 sdd[3] sdb[1] sda[0] sdc[2]
+      15627788288 blocks super 1.2 level 6, 512k chunk, algorithm 18 [4/3] [UUU_]
+      [>....................]  reshape =  0.0% (1515520/7813894144) finish=18633.4min speed=6987K/sec
+      bitmap: 0/59 pages [0KB], 65536KB chunk
+unused devices: <none>
+
+root@mediavault:/srv# mdadm --detail /dev/md127
+/dev/md127:
+        Raid Level : raid6
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 4
+     Total Devices : 4
+             State : clean, degraded, reshaping
+    Active Devices : 3
+   Working Devices : 4
+    Failed Devices : 0
+     Spare Devices : 1
+    Reshape Status : 0% complete
+        New Layout : left-symmetric
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+       3       8       48        3      spare rebuilding   /dev/sdd
+
+```
+
+The array is rebuilding to a RAID6 level array. Notice that the number of RAID devices is now 4, RAID level is 6. It also gives an estimation of the completion time (_around **13 days** -18633 minutes-_).
+
+The next step is to wait until the rebuild is complete.
+
+Verify the status of the array.
+
+```shell
+root@mediavault:/srv# cat /proc/mdstat
+
+root@mediavault:/srv# mdadm --detail /dev/md127
+```
+
+Array is clean and rebuilt.
+
+### Power down during a RAID rebuild
+
+If during this time you need to power down the NAS, there should be no issues if you do it with an ordered shutdown. You will need to check though that everything is OK, as unexpected issues might have arisen.
+
+Remember, that the procedure to check the RAID status is with `cat /proc/mdstat`:
+
+```shell
+root@mediavault:~# cat /proc/mdstat
+Personalities : [raid1] [linear] [multipath] [raid0] [raid6] [raid5] [raid4] [raid10]
+md126 : active raid6 sdb[1] sdc[2] sda[0]
+      15627788288 blocks super 1.2 level 6, 512k chunk, algorithm 18 [4/3] [UUU_]
+      [>....................]  reshape =  3.4% (272659404/7813894144) finish=1868.0min speed=67280K/sec
+      bitmap: 2/59 pages [8KB], 65536KB chunk
+
+md127 : active raid1 sde[0] sdf[1]
+      1465006464 blocks super 1.2 [2/2] [UU]
+      bitmap: 0/11 pages [0KB], 65536KB chunk
+
+unused devices: <none>
+```
+
+In my case I had configured 2 RAID groups, one RAID 1, and the RAID 6 we just configured. After reboot, the assigned identifiers had swapped, as I have no static `mdadm` configuration and it's dynamically detected at boot time.
+
+Now the older `md127` is now called `md126`. I will review the detailed information of the RAID 6 group (`mdadm --detail /dev/mdx`):
+
+```shell
+root@mediavault:~# mdadm --detail /dev/md126
+/dev/md126:
+        Raid Level : raid6
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 4
+     Total Devices : 3
+             State : clean, degraded, reshaping
+    Active Devices : 3
+   Working Devices : 3
+    Failed Devices : 0
+     Spare Devices : 0
+    Reshape Status : 4% complete
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+       -       0        0        3      removed
+```
+
+Now the last added drive `/dev/sdd` appears as "removed".
+
+We can also check the detail with the `lsblk` command, as it lists the drives and the block device associated with it:
+
+```shell
+root@mediavault:~# lsblk
+NAME    MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
+sda       8:0    0  7.3T  0 disk  
+└─md126   9:126  0 14.6T  0 raid6 /srv/dev-disk-by-label-r6big
+sdb       8:16   0  7.3T  0 disk  
+└─md126   9:126  0 14.6T  0 raid6 /srv/dev-disk-by-label-r6big
+sdc       8:32   0  7.3T  0 disk  
+└─md126   9:126  0 14.6T  0 raid6 /srv/dev-disk-by-label-r6big
+sdd       8:48   0  7.3T  0 disk  
+sde       8:64   0  1.4T  0 disk  
+└─md127   9:127  0  1.4T  0 raid1 /srv/dev-disk-by-label-r1small
+sdf       8:80   0  1.4T  0 disk  
+└─md127   9:127  0  1.4T  0 raid1 /srv/dev-disk-by-label-r1small
+sdg       8:96   1 29.9G  0 disk  
+├─sdg1    8:97   1  512M  0 part  /boot/efi
+├─sdg2    8:98   1    8G  0 part  /
+└─sdg3    8:99   1  7.7G  0 part  
+```
+
+I will place the removed drive back into the RAID 6 group with the `mdadm --assemble` command (`mdadm --assemble /dev/mdx /dev/sdy`), used to assemble one or more raid arrays from pre-existing components:
+
+```shell
+root@mediavault:~# mdadm --assemble /dev/md126 /dev/sdd
+mdadm: Cannot assemble mbr metadata on /dev/sdd
+mdadm: /dev/sdd has no superblock - assembly aborted
+```
+
+As the RAID was powered down in the middle of the rebuild process, even though the rebuild process continued at the point where it had left for the 3 original drives, it seems that **we need to restart the procedure from the beginning for the remaining drive** :(.
+
+Let's go for it. First we add the additional disk to the RAID6 array (`mdadm --add /dev/mdx /dev/sdy`) and verify the disk is available to the array (`mdadm --detail /dev/mdx`):
+
+```shell
+root@mediavault:~# mdadm --add /dev/md126 /dev/sdd
+mdadm: added /dev/sdd
+
+root@mediavault:~# mdadm --detail /dev/md126
+/dev/md126:
+        Raid Level : raid6
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 4
+     Total Devices : 4
+    Active Devices : 3
+   Working Devices : 4
+    Failed Devices : 0
+     Spare Devices : 1
+    Reshape Status : 5% complete
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+       -       0        0        3      removed
+
+       4       8       48        -      spare   /dev/sdd
+```
+
+We see that the drive is added as an spare, and it's not replacing the removed drive. The reason for that is, that right now, the RAID 6 group is still doing a resync/recovery and we need to wait for it to finish. I could verify that by trying to re-run a `mdadm --grow` with the same parameters over the RAID 6 group:
+
+```shell
+root@mediavault:~# mdadm --grow /dev/md126 --level=6 --raid-devices=4 --backup-file=/root/raid6backup
+mdadm: /dev/md126 is performing resync/recovery and cannot be reshaped
+
+root@mediavault:~# cat /proc/mdstat
+Personalities : [raid1] [linear] [multipath] [raid0] [raid6] [raid5] [raid4] [raid10]
+md126 : active raid6 sdd[4](S) sdb[1] sdc[2] sda[0]
+      15627788288 blocks super 1.2 level 6, 512k chunk, algorithm 18 [4/3] [UUU_]
+      [=>...................]  reshape =  6.5% (509481684/7813894144) finish=1899.1min speed=64102K/sec
+      bitmap: 2/59 pages [8KB], 65536KB chunk
+unused devices: <none>
+```
+
+The conclusion: **we need to restart the procedure from the beginning (13 days) and wait for 32 extra hours** _-1899 minutes-_ for the current reshape process to finish. _So hopefully I will have the RAID 6 group clean after waiting for a little bit more than 14 days... fingers crossed_.
+
+
+## 8. References and Credits
 
 This document is based on the following resources. I really thank the authors for sharing their knowledge and trouble:
+-   OpenMediaVault installation procedure - [https://openmediavault.readthedocs.io/en/5.x/installation/index.html](https://openmediavault.readthedocs.io/en/5.x/installation/index.html).
+-   Installing OpenMediaVault on RAID-1 array - [https://lazic.info/josip/post/installing-openmediavault-on-raid-device/](https://lazic.info/josip/post/installing-openmediavault-on-raid-device/)
+-   Converting RAID5 to RAID6 in mdadm - [http://ewams.net/?date=2013/05/02&view=Converting_RAID5_to_RAID6_in_mdadm](http://ewams.net/?date=2013/05/02&view=Converting_RAID5_to_RAID6_in_mdadm)
 
-- Installing OpenMediaVault on RAID-1 array - https://lazic.info/josip/post/installing-openmediavault-on-raid-device/
+## 9. Summary
 
-
-## 7. Summary
-
-- __**Objetive:**__ Cover OpenMediaVault unsupported and not recommended installation procedures, and hopefully save you some time!
+-   _**Objetive:**_ Cover OpenMediaVault unsupported and not recommended installation procedures, and hopefully save you some time!
