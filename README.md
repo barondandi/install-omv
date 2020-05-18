@@ -24,6 +24,7 @@ I will be using version 5.x and only specifying here the steps which are not ref
 5.  [RAID installation using only hard drives](#5.-RAID-installation-using-only-hard-drives)
 6.  [Data migration](#6.-Data-migration)
 7.  [Converting RAID5 to RAID6](#7.-Converting-RAID5-to-RAID6)
+    -   [Power down during a RAID rebuild](#Power-down-during-a-RAID-rebuild)
 8.  [References and Credits](#8.-references-and-credits)
 9.  [Summary](#9.-summary)
 
@@ -829,11 +830,9 @@ root@mediavault:/srv# mdadm --detail /dev/md127
 
 ```
 
-The array is rebuilding to a RAID6 level array. Notice that the number of RAID devices is now 4, RAID level is 6. It also gives an estimation of the completion time (around 13 days -18633 minutes-).
+The array is rebuilding to a RAID6 level array. Notice that the number of RAID devices is now 4, RAID level is 6. It also gives an estimation of the completion time (_around **13 days** -18633 minutes-_).
 
 The next step is to wait until the rebuild is complete.
-
-> NOTE: If during this time you need to power down the NAS, there should be no issues if you do it with an ordered shutdown. I did it and when I restarted, the rebuild process continued at the point where it had left (though I had read that it might restart from the beginning).
 
 Verify the status of the array.
 
@@ -844,6 +843,129 @@ root@mediavault:/srv# mdadm --detail /dev/md127
 ```
 
 Array is clean and rebuilt.
+
+### Power down during a RAID rebuild
+
+If during this time you need to power down the NAS, there should be no issues if you do it with an ordered shutdown. You will need to check though that everything is OK, as unexpected issues might have arisen.
+
+Remember, that the procedure to check the RAID status is with `cat /proc/mdstat`:
+
+```shell
+root@mediavault:~# cat /proc/mdstat
+Personalities : [raid1] [linear] [multipath] [raid0] [raid6] [raid5] [raid4] [raid10]
+md126 : active raid6 sdb[1] sdc[2] sda[0]
+      15627788288 blocks super 1.2 level 6, 512k chunk, algorithm 18 [4/3] [UUU_]
+      [>....................]  reshape =  3.4% (272659404/7813894144) finish=1868.0min speed=67280K/sec
+      bitmap: 2/59 pages [8KB], 65536KB chunk
+
+md127 : active raid1 sde[0] sdf[1]
+      1465006464 blocks super 1.2 [2/2] [UU]
+      bitmap: 0/11 pages [0KB], 65536KB chunk
+
+unused devices: <none>
+```
+
+In my case I had configured 2 RAID groups, one RAID 1, and the RAID 6 we just configured. After reboot, the assigned identifiers had swapped, as I have no static `mdadm` configuration and it's dynamically detected at boot time.
+
+Now the older `md127` is now called `md126`. I will review the detailed information of the RAID 6 group (`mdadm --detail /dev/mdx`):
+
+```shell
+root@mediavault:~# mdadm --detail /dev/md126
+/dev/md126:
+        Raid Level : raid6
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 4
+     Total Devices : 3
+             State : clean, degraded, reshaping
+    Active Devices : 3
+   Working Devices : 3
+    Failed Devices : 0
+     Spare Devices : 0
+    Reshape Status : 4% complete
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+       -       0        0        3      removed
+```
+
+Now the last added drive `/dev/sdd` appears as "removed".
+
+We can also check the detail with the `lsblk` command, as it lists the drives and the block device associated with it:
+
+```shell
+root@mediavault:~# lsblk
+NAME    MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
+sda       8:0    0  7.3T  0 disk  
+└─md126   9:126  0 14.6T  0 raid6 /srv/dev-disk-by-label-r6big
+sdb       8:16   0  7.3T  0 disk  
+└─md126   9:126  0 14.6T  0 raid6 /srv/dev-disk-by-label-r6big
+sdc       8:32   0  7.3T  0 disk  
+└─md126   9:126  0 14.6T  0 raid6 /srv/dev-disk-by-label-r6big
+sdd       8:48   0  7.3T  0 disk  
+sde       8:64   0  1.4T  0 disk  
+└─md127   9:127  0  1.4T  0 raid1 /srv/dev-disk-by-label-r1small
+sdf       8:80   0  1.4T  0 disk  
+└─md127   9:127  0  1.4T  0 raid1 /srv/dev-disk-by-label-r1small
+sdg       8:96   1 29.9G  0 disk  
+├─sdg1    8:97   1  512M  0 part  /boot/efi
+├─sdg2    8:98   1    8G  0 part  /
+└─sdg3    8:99   1  7.7G  0 part  
+```
+
+I will place the removed drive back into the RAID 6 group with the `mdadm --assemble` command (`mdadm --assemble /dev/mdx /dev/sdy`), used to assemble one or more raid arrays from pre-existing components:
+
+```shell
+root@mediavault:~# mdadm --assemble /dev/md126 /dev/sdd
+mdadm: Cannot assemble mbr metadata on /dev/sdd
+mdadm: /dev/sdd has no superblock - assembly aborted
+```
+
+As the RAID was powered down in the middle of the rebuild process, even though the rebuild process continued at the point where it had left for the 3 original drives, it seems that **we need to restart the procedure from the beginning for the remaining drive** :(.
+
+Let's go for it. First we add the additional disk to the RAID6 array (`mdadm --add /dev/mdx /dev/sdy`) and verify the disk is available to the array (`mdadm --detail /dev/mdx`):
+
+```shell
+root@mediavault:~# mdadm --add /dev/md126 /dev/sdd
+mdadm: added /dev/sdd
+
+root@mediavault:~# mdadm --detail /dev/md126
+/dev/md126:
+        Raid Level : raid6
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 4
+     Total Devices : 4
+    Active Devices : 3
+   Working Devices : 4
+    Failed Devices : 0
+     Spare Devices : 1
+    Reshape Status : 5% complete
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+       -       0        0        3      removed
+
+       4       8       48        -      spare   /dev/sdd
+```
+
+We see that the drive is added as an spare, and it's not replacing the removed drive. The reason for that is, that right now, the RAID 6 group is still doing a resync/recovery and we need to wait for it to finish. I could verify that by trying to re-run a `mdadm --grow` with the same parameters over the RAID 6 group:
+
+```shell
+root@mediavault:~# mdadm --grow /dev/md126 --level=6 --raid-devices=4 --backup-file=/root/raid6backup
+mdadm: /dev/md126 is performing resync/recovery and cannot be reshaped
+
+root@mediavault:~# cat /proc/mdstat
+Personalities : [raid1] [linear] [multipath] [raid0] [raid6] [raid5] [raid4] [raid10]
+md126 : active raid6 sdd[4](S) sdb[1] sdc[2] sda[0]
+      15627788288 blocks super 1.2 level 6, 512k chunk, algorithm 18 [4/3] [UUU_]
+      [=>...................]  reshape =  6.5% (509481684/7813894144) finish=1899.1min speed=64102K/sec
+      bitmap: 2/59 pages [8KB], 65536KB chunk
+unused devices: <none>
+```
+
+The conclusion: **we need to restart the procedure from the beginning (13 days) and wait for 32 extra hours** _-1899 minutes-_ for the current reshape process to finish. _So hopefully I will have the RAID 6 group clean after waiting for a little bit more than 14 days... fingers crossed_.
+
 
 ## 8. References and Credits
 
