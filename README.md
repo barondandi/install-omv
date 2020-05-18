@@ -833,6 +833,8 @@ The array is rebuilding to a RAID6 level array. Notice that the number of RAID d
 
 The next step is to wait until the rebuild is complete.
 
+> NOTE: If during this time you need to power down the NAS, there should be no issues if you do it with an ordered shutdown. I did it and when I restarted, the rebuild process continued at the point where it had left (though I had read that it might restart from the beginning).
+
 Verify the status of the array.
 
 ```shell
