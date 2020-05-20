@@ -949,7 +949,7 @@ root@mediavault:~# mdadm --detail /dev/md126
        4       8       48        -      spare   /dev/sdd
 ```
 
-We see that the drive is added as an spare, and it's not replacing the removed drive. The reason for that is, that right now, the RAID 6 group is still doing a resync/recovery and we need to wait for it to finish. I could verify that by trying to re-run a `mdadm --grow` with the same parameters over the RAID 6 group:
+We see that the drive is added as an spare, and it's not replacing the removed drive. The reason for that is, that right now, the RAID 6 group is still doing a resync/recovery and we need to wait for it to finish. I could verify that, by trying to re-run a `mdadm --grow` with the same parameters over the RAID 6 group:
 
 ```shell
 root@mediavault:~# mdadm --grow /dev/md126 --level=6 --raid-devices=4 --backup-file=/root/raid6backup
@@ -962,6 +962,35 @@ md126 : active raid6 sdd[4](S) sdb[1] sdc[2] sda[0]
       [=>...................]  reshape =  6.5% (509481684/7813894144) finish=1899.1min speed=64102K/sec
       bitmap: 2/59 pages [8KB], 65536KB chunk
 unused devices: <none>
+```
+
+Once the resync is finished, it will automatically start rebuilding over the spare drive we added to the RAID group:
+
+```shell
+root@mediavault:~# cat /proc/mdstat
+Personalities : [raid1] [linear] [multipath] [raid0] [raid6] [raid5] [raid4] [raid10]
+md126 : active raid6 sdd[4] sdb[1] sdc[2] sda[0]
+      15627788288 blocks super 1.2 level 6, 512k chunk, algorithm 2 [4/3] [UUU_]
+      [==>..................]  recovery = 11.6% (910415936/7813894144) finish=949.9min speed=121115K/sec
+      bitmap: 1/59 pages [4KB], 65536KB chunk
+unused devices: <none>
+
+root@mediavault:~# mdadm --detail /dev/md126
+/dev/md126:
+        Raid Level : raid6
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 4
+     Total Devices : 4
+    Active Devices : 3
+   Working Devices : 4
+    Failed Devices : 0
+     Spare Devices : 1
+    Rebuild Status : 11% complete
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+       4       8       48        3      spare rebuilding   /dev/sdd
 ```
 
 The conclusion: **we need to restart the procedure from the beginning (13 days) and wait for 32 extra hours** _-1899 minutes-_ for the current reshape process to finish. _So hopefully I will have the RAID 6 group clean after waiting for a little bit more than 14 days... fingers crossed_.
