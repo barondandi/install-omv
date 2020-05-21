@@ -993,7 +993,37 @@ root@mediavault:~# mdadm --detail /dev/md126
        4       8       48        3      spare rebuilding   /dev/sdd
 ```
 
-The conclusion: **we need to restart the procedure from the beginning (13 days) and wait for 32 extra hours** _-1899 minutes-_ for the current reshape process to finish. _So hopefully I will have the RAID 6 group clean after waiting for a little bit more than 14 days... fingers crossed_.
+And after waiting for another pair of days the RAID 6 group is finally rebuilt and clean:
+
+```shell
+root@mediavault:~# cat /proc/mdstat
+Personalities : [raid1] [linear] [multipath] [raid0] [raid6] [raid5] [raid4] [raid10]
+md126 : active raid6 sdd[4] sdb[1] sdc[2] sda[0]
+      15627788288 blocks super 1.2 level 6, 512k chunk, algorithm 2 [4/4] [UUUU]
+      bitmap: 0/59 pages [0KB], 65536KB chunk
+unused devices: <none>
+
+root@mediavault:~# mdadm --detail /dev/md126
+/dev/md126:
+        Raid Level : raid6
+        Array Size : 15627788288 (14903.82 GiB 16002.86 GB)
+      Raid Devices : 4
+     Total Devices : 4
+             State : clean
+    Active Devices : 4
+   Working Devices : 4
+    Failed Devices : 0
+     Spare Devices : 0
+    Number   Major   Minor   RaidDevice State
+       0       8        0        0      active sync   /dev/sda
+       1       8       16        1      active sync   /dev/sdb
+       2       8       32        2      active sync   /dev/sdc
+       4       8       48        3      active sync   /dev/sdd
+```
+
+The conclusion: **We need to restart the procedure from the beginning, and wait for some extra hours for the RAID operation in process when we rebooted to resync/recover**. In any case, expect the operation to last for several days with big drives. That is why, it is crucial to have RAID 6 implemented and not RAID 5, as if a drive failed, our data be exposed for several days until an additional drive was rebuilt.
+
+> For me, instead of the initial estimation of 13 days, it "only" took 6 days to have the RAID 6 group clean (to go from 3x8TB RAID 5 to 4x8TB RAID 6).
 
 
 ## 8. References and Credits
